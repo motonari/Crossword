@@ -3,8 +3,8 @@ struct LocationIterator: IteratorProtocol {
     var location: Location?
 
     init(grid: Grid) {
-        let initialLocation = Location(x: 0, y: 0)
-        if initialLocation.x < grid.width && initialLocation.y < grid.height {
+        let initialLocation = Location(0, 0)
+        if grid.contains(initialLocation) {
             self.location = initialLocation
         } else {
             self.location = nil
@@ -28,7 +28,7 @@ struct LocationIterator: IteratorProtocol {
         if x == 0 && y == 0 {
             location = nil
         } else {
-            location = Location(x: x, y: y)
+            location = Location(x, y)
         }
         return currentLocation
     }

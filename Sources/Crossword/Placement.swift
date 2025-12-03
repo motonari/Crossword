@@ -1,10 +1,10 @@
-struct Placement: Equatable, Comparable {
+public struct Placement: Equatable, Comparable, Hashable {
 
     let word: String
     let start: Location
     let direction: Direction
 
-    static func < (lhs: Placement, rhs: Placement) -> Bool {
+    public static func < (lhs: Placement, rhs: Placement) -> Bool {
         if lhs.word != rhs.word {
             return lhs.word < rhs.word
         }
@@ -77,15 +77,35 @@ struct Placement: Equatable, Comparable {
         return result
     }
 
-    func compatible(with other: Placement) -> Bool {
+    private func overlapping(with other: Placement) -> Bool {
         let (xRangeA, yRangeA) = span
         let (xRangeB, yRangeB) = other.span
 
-        if !xRangeA.overlaps(xRangeB) || !yRangeA.overlaps(yRangeB) {
+        return xRangeA.overlaps(xRangeB) && yRangeA.overlaps(yRangeB)
+    }
+
+    func crossing(with other: Placement) -> Bool {
+        guard overlapping(with: other) else {
+            // Not overlapping; they are not crossing.
+            return false
+        }
+
+        guard direction != other.direction else {
+            // Same direction; not crossing
+            return false
+        }
+
+        return true
+    }
+
+    func compatible(with other: Placement) -> Bool {
+        guard overlapping(with: other) else {
+            // Not overlapping; they are compatible.
             return true
         }
 
-        if direction == other.direction {
+        guard direction != other.direction else {
+            // Same direction; not compatible
             return false
         }
 

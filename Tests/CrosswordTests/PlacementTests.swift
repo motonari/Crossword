@@ -9,11 +9,11 @@ import Testing
         let word = "01234"
         let placement = Placement(
             word: word,
-            start: Location(x: 0, y: 0),
+            start: Location(0, 0),
             direction: .across)
 
         #expect(placement.word == word)
-        #expect(placement.start == Location(x: 0, y: 0))
+        #expect(placement.start == Location(0, 0))
         #expect(placement.direction == .across)
     }
 
@@ -22,21 +22,21 @@ import Testing
         let word = "A"
         let placement = Placement(
             word: word,
-            start: Location(x: 0, y: 0),
+            start: Location(0, 0),
             direction: .across)
 
         #expect(
-            placement.contains(Location(x: 0, y: 0)),
+            placement.contains(Location(0, 0)),
             "The placement should occupy (0, 0).")
         #expect(
-            placement.contains(Location(x: 1, y: 0)),
+            placement.contains(Location(1, 0)),
             "The placement should occupy (1, 0).")
 
         #expect(
-            !placement.contains(Location(x: 2, y: 0)),
+            !placement.contains(Location(2, 0)),
             "The placement should NOT occupy (2, 0).")
         #expect(
-            !placement.contains(Location(x: 0, y: 1)),
+            !placement.contains(Location(0, 1)),
             "The placement should NOT occupy (0, 1).")
     }
 
@@ -44,12 +44,12 @@ import Testing
     func nonOverlappingPlacements() {
         let placementA = Placement(
             word: "#A#",
-            start: Location(x: 0, y: 0),
+            start: Location(0, 0),
             direction: .across)
 
         let placementB = Placement(
             word: "#B#",
-            start: Location(x: 0, y: 1),
+            start: Location(0, 1),
             direction: .across)
 
         #expect(placementA.compatible(with: placementB))
@@ -60,12 +60,12 @@ import Testing
     func overlappingPlacementsOfSameDirection() {
         let placementA = Placement(
             word: "#A#",
-            start: Location(x: 0, y: 0),
+            start: Location(0, 0),
             direction: .across)
 
         let placementB = Placement(
             word: "#A#",
-            start: Location(x: 0, y: 0),
+            start: Location(0, 0),
             direction: .across)
 
         #expect(!placementA.compatible(with: placementB))
@@ -81,12 +81,12 @@ import Testing
 
         let placementA = Placement(
             word: "#A#",
-            start: Location(x: 0, y: 1),
+            start: Location(0, 1),
             direction: .across)
 
         let placementB = Placement(
             word: "#A#",
-            start: Location(x: 1, y: 0),
+            start: Location(1, 0),
             direction: .down)
 
         #expect(placementA.compatible(with: placementB))
@@ -105,12 +105,12 @@ import Testing
 
         let placementA = Placement(
             word: "#APPLE#",
-            start: Location(x: 1, y: 3),
+            start: Location(1, 3),
             direction: .across)
 
         let placementB = Placement(
             word: "#POLE#",
-            start: Location(x: 5, y: 0),
+            start: Location(5, 0),
             direction: .down)
 
         #expect(placementA.compatible(with: placementB))
@@ -127,12 +127,12 @@ import Testing
 
         let placementA = Placement(
             word: "#APPLE#",
-            start: Location(x: 1, y: 3),
+            start: Location(1, 3),
             direction: .across)
 
         let placementB = Placement(
             word: "#HI#",
-            start: Location(x: 7, y: 0),
+            start: Location(7, 0),
             direction: .down)
 
         #expect(placementA.compatible(with: placementB))
@@ -143,12 +143,12 @@ import Testing
     func overlappingPlacementsWithoutMatchingLetter() {
         let placementA = Placement(
             word: "#A#",
-            start: Location(x: 0, y: 1),
+            start: Location(0, 1),
             direction: .across)
 
         let placementB = Placement(
             word: "#B#",
-            start: Location(x: 1, y: 0),
+            start: Location(1, 0),
             direction: .down)
 
         #expect(!placementA.compatible(with: placementB))

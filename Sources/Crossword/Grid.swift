@@ -1,17 +1,17 @@
-struct Grid {
-    init(width: Int, height: Int) {
-        guard 3 <= width else {
-            fatalError("Grid width must be 3 or greater.")
-        }
+public struct Grid {
+    let width: Int
+    let height: Int
 
-        guard 3 <= height else {
-            fatalError("Grid height must be 3 or greater.")
+    public init(width: Int, height: Int) {
+        guard width > 0, height > 0 else {
+            fatalError("width and height must be greater than 0.")
         }
 
         self.width = width
         self.height = height
     }
 
-    let width: Int
-    let height: Int
+    func contains(_ location: Location) -> Bool {
+        (0 <= location.x && location.x < width) && (0 <= location.y && location.y < height)
+    }
 }

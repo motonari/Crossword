@@ -16,14 +16,27 @@ let package = Package(
         )
     ],
 
+    dependencies: [
+        .package(
+            url: "https://github.com/apple/swift-collections.git",
+            .upToNextMajor(from: "1.3.0")
+        ),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+    ],
+
     targets: [
         .target(
             name: "Crossword",
-            dependencies: []),
+            dependencies: [
+                .product(name: "Collections", package: "swift-collections")
+            ]),
 
         .executableTarget(
             name: "CrosswordMaker",
-            dependencies: ["Crossword"]
+            dependencies: [
+                "Crossword",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
         ),
 
         .testTarget(

@@ -8,15 +8,15 @@ import Testing
         var iterator = LocationIterator(grid: Grid(width: 3, height: 3))
 
         let expectations = [
-            Location(x: 0, y: 0),
-            Location(x: 1, y: 0),
-            Location(x: 2, y: 0),
-            Location(x: 0, y: 1),
-            Location(x: 1, y: 1),
-            Location(x: 2, y: 1),
-            Location(x: 0, y: 2),
-            Location(x: 1, y: 2),
-            Location(x: 2, y: 2),
+            Location(0, 0),
+            Location(1, 0),
+            Location(2, 0),
+            Location(0, 1),
+            Location(1, 1),
+            Location(2, 1),
+            Location(0, 2),
+            Location(1, 2),
+            Location(2, 2),
         ]
 
         for (index, expectation) in expectations.enumerated() {
