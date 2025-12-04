@@ -1,5 +1,12 @@
 public struct Lexicon {
-    public static let full = [
+    public init() {
+    }
+
+    public var full: [Word] {
+        vocabularies.map(Word.init)
+    }
+
+    private let vocabularies = [
         "THRILL",
         "OVERTHROW",
         "GIFT",
@@ -60,6 +67,9 @@ public struct Lexicon {
         "AVERAGE",
         "PLANET",
         "COSTUME",
+        "HAPPY",
+        "JOY",
+        "BIRTHDAY",
         "INDUSTRIOUS",
         "LAUNCH",
         "ASTRONOMY",
@@ -926,5 +936,5 @@ public struct Lexicon {
         "MILLIONAIRE",
         "RHYTHMIC",
         "MISCHIEVOUS",
-    ].map(Word.init)
+    ]
 }

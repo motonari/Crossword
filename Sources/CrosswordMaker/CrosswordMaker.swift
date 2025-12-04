@@ -59,7 +59,7 @@ struct CrosswordMaker: ParsableCommand {
             return
         }
 
-        let lexicon = Lexicon.full
+        let lexicon = Lexicon().full
         let mustWords: [Word] =
             if let mustWord {
                 [Word(mustWord.uppercased())]
