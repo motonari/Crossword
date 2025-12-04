@@ -2,7 +2,11 @@ import Collections
 import CryptoKit
 
 extension TreeSet where Element == Span {
-    fileprivate func nextSpans(grid: Grid) -> [Span] {
+    fileprivate func nextSpans(
+        grid: Grid,
+        minWordLength: Int,
+        beamWidth: Int
+    ) -> [Span] {
         var candidates = [(Int, Span)]()
         let spans = Array(self)
 
@@ -15,11 +19,11 @@ extension TreeSet where Element == Span {
                         grid.height - location.y
                     }
 
-                if maxLength < 2 {
+                if maxLength < minWordLength {
                     continue
                 }
 
-                for length in (2...maxLength).reversed() {
+                for length in (minWordLength...maxLength).reversed() {
                     let newSpan = Span(at: location, length: length, direction: direction)
                     guard spans.allSatisfy({ newSpan.compatible(with: $0) }) else {
                         continue
@@ -52,7 +56,7 @@ extension TreeSet where Element == Span {
             candidates
             .shuffled()
             .sorted(by: { $0.0 > $1.0 })
-            .prefix(4).map { $0.1 }
+            .prefix(beamWidth).map { $0.1 }
     }
 
     fileprivate var digest: SHA256.Digest {
@@ -69,13 +73,17 @@ struct LayoutGeneratorIterator {
     typealias SpanSet = TreeSet<Span>
     let grid: Grid
     let wordCount: Int
+    let minWordLength: Int
+    let beamWidth: Int
 
     var workQueue = Deque<SpanSet>()
     var visitedSet = Set<SHA256.Digest>()
 
-    init(grid: Grid, wordCount: Int) {
+    init(grid: Grid, wordCount: Int, minWordLength: Int, beamWidth: Int) {
         self.grid = grid
         self.wordCount = wordCount
+        self.minWordLength = minWordLength
+        self.beamWidth = beamWidth
         self.workQueue.prepend(SpanSet([]))
     }
 
@@ -99,7 +107,11 @@ extension LayoutGeneratorIterator: IteratorProtocol {
     }
 
     private mutating func expand(_ baseLayout: SpanSet) {
-        for span in baseLayout.nextSpans(grid: grid) {
+        let nextSpans = baseLayout.nextSpans(
+            grid: grid,
+            minWordLength: minWordLength,
+            beamWidth: beamWidth)
+        for span in nextSpans {
             let newLayout = baseLayout.union([span])
             let digest = newLayout.digest
 
