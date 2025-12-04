@@ -1,5 +1,6 @@
 import ArgumentParser
 import Crossword
+import Darwin
 
 @main
 struct CrosswordMaker: ParsableCommand {
@@ -31,8 +32,8 @@ struct CrosswordMaker: ParsableCommand {
             progressCount += 1
             intersectionCount += blackCellLayout.intersectionCount(in: grid)
             if progressCount % 1000 == 0 {
-                print("\(progressCount) / \(layoutStore.count)")
-                print("Score = \(intersectionCount / 1000)")
+                fputs("\(progressCount) / \(layoutStore.count)\n", stderr)
+                fputs("Score = \(intersectionCount / 1000)\n", stderr)
                 intersectionCount = 0
             }
 
@@ -66,7 +67,7 @@ struct CrosswordMaker: ParsableCommand {
                 []
             }
 
-        print("Solving with word count = \(count), mustWord: \(mustWords)")
+        fputs("Solving with word count = \(count), mustWord: \(mustWords)\n", stderr)
         try makeCrossword(
             grid: grid,
             wordCount: count,
