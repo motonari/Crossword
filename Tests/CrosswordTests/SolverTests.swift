@@ -45,8 +45,9 @@ import Testing
 
         try #require(solutions.count == 1)
         let solution = try #require(solutions.first)
+
         #expect(
-            solution == """
+            solution.stringRepresentation == """
                 D##
                 OWL
                 G##

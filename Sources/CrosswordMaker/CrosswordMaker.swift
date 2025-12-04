@@ -1,6 +1,6 @@
 import ArgumentParser
 import Crossword
-import Darwin
+import Foundation
 
 @main
 struct CrosswordMaker: ParsableCommand {
@@ -9,6 +9,9 @@ struct CrosswordMaker: ParsableCommand {
 
     @Option(name: .shortAndLong, help: "A word to include in the puzzle.")
     var mustWord: String?
+
+    @Option(name: .shortAndLong, help: "The output file.")
+    var outputFileName: String
 
     @Option(name: .shortAndLong, help: "How many words in the puzzle?")
     var count = 12
@@ -32,8 +35,8 @@ struct CrosswordMaker: ParsableCommand {
             progressCount += 1
             intersectionCount += blackCellLayout.intersectionCount(in: grid)
             if progressCount % 1000 == 0 {
-                fputs("\(progressCount) / \(layoutStore.count)\n", stderr)
-                fputs("Score = \(intersectionCount / 1000)\n", stderr)
+                print("\(progressCount) / \(layoutStore.count)")
+                print("Score = \(intersectionCount / 1000)")
                 intersectionCount = 0
             }
 
@@ -44,7 +47,8 @@ struct CrosswordMaker: ParsableCommand {
 
             let solutions = solver.solve()
             if !solutions.isEmpty {
-                print(solutions[0])
+                let renderer = HTMLSolutionRenderer(to: URL(fileURLWithPath: outputFileName))
+                try renderer.render(solution: solutions[0])
                 break
             }
         }
@@ -67,7 +71,7 @@ struct CrosswordMaker: ParsableCommand {
                 []
             }
 
-        fputs("Solving with word count = \(count), mustWord: \(mustWords)\n", stderr)
+        print("Solving with word count = \(count), mustWord: \(mustWords)")
         try makeCrossword(
             grid: grid,
             wordCount: count,

@@ -107,7 +107,7 @@ public struct Solver {
         }
     }
 
-    public func solve() -> [String] {
+    public func solve() -> [Solution] {
         guard
             var solution = Solution(
                 crossword: crossword,
@@ -125,12 +125,10 @@ public struct Solver {
             return []
         }
 
-        var solutions = [String]()
+        var solutions = [Solution]()
         var stop = false
         solveInternal(solution: solution, stop: &stop) { solution, stop in
-            let renderer = SolutionRenderer()
-            let result = renderer.render(solution: solution)
-            solutions.append(result)
+            solutions.append(solution)
             stop = (solutions.count > 0)
         }
 
