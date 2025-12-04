@@ -134,7 +134,7 @@ public struct Solver {
         var stop = false
         solveInternal(domains: domains, stop: &stop) { solution, stop in
             solutions.append(solution.asString)
-            stop = (solutions.count > 2)
+            stop = (solutions.count > 0)
         }
 
         return solutions

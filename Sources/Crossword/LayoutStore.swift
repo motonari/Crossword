@@ -49,12 +49,29 @@ public struct LayoutScore: Sequence {
         return fileURL
     }
 
-    public static func generateLayoutFile(grid: Grid, wordCount: Int) throws -> URL {
+    public static func generateLayoutFile(
+        grid: Grid, wordCount: Int, maxLayoutCount: Int = 1_000_000
+    ) throws -> URL {
         let fileURL = defaultLayoutFileURL(grid: grid, wordCount: wordCount)
         FileManager.default.createFile(atPath: fileURL.path, contents: nil)
 
-        let fileHandle = try FileHandle(forWritingTo: fileURL)
+        var layouts = [Layout]()
         for layout in LayoutGenerator(grid: grid, wordCount: wordCount) {
+            if layouts.count > maxLayoutCount {
+                break
+            }
+
+            if layouts.count % 1000 == 0 {
+                print("\(layouts.count) / \(maxLayoutCount)")
+            }
+            layouts.append(layout)
+        }
+
+        // Sort by intersection count
+        layouts.sort { $0.intersectionCount(in: grid) > $1.intersectionCount(in: grid) }
+
+        let fileHandle = try FileHandle(forWritingTo: fileURL)
+        for layout in layouts {
             fileHandle.write(layout.dataRepresentation)
         }
         try fileHandle.close()

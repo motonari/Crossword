@@ -23,8 +23,17 @@ extension TreeSet where Element == Span {
                     continue
                 }
 
-                for length in (minWordLength...maxLength).reversed() {
+                for length in (minWordLength...maxLength) {
                     let newSpan = Span(at: location, length: length, direction: direction)
+
+                    guard spans.allSatisfy({ newSpan.compatibleStart(with: $0) }) else {
+                        // Optimization. If `newSpan`'s start is not
+                        // compatible with an existing span, it won't
+                        // be compatible if we extend the length of
+                        // it.
+                        break
+                    }
+
                     guard spans.allSatisfy({ newSpan.compatible(with: $0) }) else {
                         continue
                     }

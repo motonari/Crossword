@@ -184,6 +184,38 @@ extension Span {
 
 /// Compatibility test
 extension Span {
+    func compatibleStart(with other: Span) -> Bool {
+        let (otherRangeX, otherRangeY) = other.range
+
+        // The other span contains a cell which is prior to the this
+        // span's starting cell. For example, "THIS" and "OTHER"
+        // cannot co-exist in this way because "HTHIS" is not a word.
+        //
+        //  O
+        //  T
+        //  HTHIS
+        //  E
+        //  R
+
+        return !otherRangeX.contains(startEdge.x) || !otherRangeY.contains(startEdge.y)
+    }
+
+    func compatibleEnd(with other: Span) -> Bool {
+        let (otherRangeX, otherRangeY) = other.range
+
+        // The other span contains a cell which is after the this
+        // span's last cell. For example, "THIS" and "OTHER"
+        // cannot co-exist in this way because "THISH" is not a word.
+        //
+        //      O
+        //      T
+        //  THISH
+        //      E
+        //      R
+
+        return !otherRangeX.contains(end.x) || !otherRangeY.contains(end.y)
+    }
+
     /// Returns true if the span can co-exist with the other span.
     func compatible(with other: Span) -> Bool {
         guard self != other else {
@@ -191,41 +223,14 @@ extension Span {
             return false
         }
 
-        let (thisRangeX, thisRangeY) = range
-        let (otherRangeX, otherRangeY) = other.range
-
-        if thisRangeX.contains(other.startEdge.x) && thisRangeY.contains(other.startEdge.y) {
-            // This span contains a cell which is prior to the other
-            // span's starting cell. For example, "CAT" and "DOG"
-            // cannot co-exist in this way because "ADOG" is not a word.
-            //
-            //  C
-            //  ADOG
-            //  T
+        guard
+            self.compatibleStart(with: other),
+            self.compatibleEnd(with: other),
+            other.compatibleStart(with: self),
+            other.compatibleEnd(with: self)
+        else {
             return false
         }
-
-        if thisRangeX.contains(other.end.x) && thisRangeY.contains(other.end.y) {
-            // This span contains a cell which is after the other
-            // span's last cell. For example, "CAT" and "DOG" cannot
-            // co-exist in this way because "DOGA" is not a word.
-            //
-            //     C
-            //  DOGA
-            //     T
-            return false
-        }
-
-        if otherRangeX.contains(startEdge.x) && otherRangeY.contains(startEdge.y) {
-            // Similar to above, but for the symmetric condition.
-            return false
-        }
-
-        if otherRangeX.contains(end.x) && otherRangeY.contains(end.y) {
-            // Similar to above, but for the symmetric condition.
-            return false
-        }
-
         return true
     }
 }

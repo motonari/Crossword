@@ -27,9 +27,7 @@ public struct Crossword {
         direction: Direction,
         in grid: Grid,
         with layout: Layout
-    )
-        -> Bool
-    {
+    ) -> Bool {
         guard grid.contains(location) else {
             return false
         }

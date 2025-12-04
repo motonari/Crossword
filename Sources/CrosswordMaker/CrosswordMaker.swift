@@ -43,12 +43,8 @@ struct CrosswordMaker: ParsableCommand {
 
             let solutions = solver.solve()
             if !solutions.isEmpty {
-                print()
-                print(crossword.asString)
-                for solution in solutions.shuffled().prefix(3) {
-                    print()
-                    print(solution)
-                }
+                print(solutions[0])
+                break
             }
         }
     }
