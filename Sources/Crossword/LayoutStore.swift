@@ -85,8 +85,9 @@ extension LayoutStore {
                 print("\(layouts.count) / \(maxLayoutCount)")
             }
 
+            let score = layout.intersectionCount(in: grid)
             let insertingIndex = layouts.partitioningIndex {
-                $0.intersectionCount(in: grid) >= layout.intersectionCount(in: grid)
+                score >= $0.intersectionCount(in: grid)
             }
 
             layouts.insert(layout, at: insertingIndex)
