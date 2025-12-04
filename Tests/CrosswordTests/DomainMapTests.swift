@@ -15,7 +15,7 @@ import Testing
 
         // Every span should have domain: "CAT" and "DOG"
         for span in crossword.spans {
-            #expect(domainMap.values(for: span) == wordList)
+            #expect(domainMap.domain(for: span).stringArrayRepresentation == wordList)
         }
     }
 
@@ -49,6 +49,6 @@ import Testing
         // span1 at the letter 'O'. So, the reduced domain for span1
         // should be just ["OWL"].
 
-        #expect(domainMap.values(for: span1) == ["OWL"])
+        #expect(domainMap.domain(for: span1).stringArrayRepresentation == ["OWL"])
     }
 }

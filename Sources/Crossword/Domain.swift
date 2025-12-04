@@ -1,23 +1,22 @@
 struct Domain {
-    private var values = [[Character]]()
+    private var values = [Word]()
 }
 
 /// Initializers
 extension Domain {
-    init(for span: Span, using wordList: [String]) {
+    init(for span: Span, using wordList: [Word]) {
         for word in wordList {
-            guard word.utf16.count == span.length else {
+            guard word.count == span.length else {
                 continue
             }
-            let value = [Character](word)
-            values.append(value)
+            values.append(word)
         }
     }
 }
 
 /// Collections
 extension Domain: Collection {
-    typealias Index = [[Character]].Index
+    typealias Index = [Word].Index
 
     var startIndex: Index {
         values.startIndex
@@ -31,7 +30,7 @@ extension Domain: Collection {
         values.index(after: index)
     }
 
-    subscript(_ index: Index) -> [Character] {
+    subscript(_ index: Index) -> Word {
         values[index]
     }
 }
@@ -41,24 +40,19 @@ extension Domain {
     var stringArrayRepresentation: [String] {
         values.map { String.init($0) }
     }
+    var wordArrayRepresentation: [Word] {
+        values
+    }
 }
 
 /// Mutating
 extension Domain {
-    mutating func update(to newValues: [String]) {
-        values.removeAll()
-        for word in newValues {
-            var value = [Character]()
-            for char in word {
-                value.append(char)
-            }
-            values.append(value)
-        }
+    mutating func update(to newValues: [Word]) {
+        values = newValues
     }
 
-    mutating func update(remove word: String) {
-        let value = word.map { $0 }
-        guard let index = values.firstIndex(of: value) else {
+    mutating func update(remove word: Word) {
+        guard let index = values.firstIndex(of: word) else {
             return
         }
         values.remove(at: index)

@@ -18,7 +18,7 @@ struct DomainMap {
         }
         let referenceDomain = domains[referenceSpan]!
 
-        var validWords = [String]()
+        var validWords = [Word]()
         var changed = false
         for targetValue in domains[targetSpan]! {
             let overlapCharacter = targetValue[targetCharIndex]
@@ -29,7 +29,7 @@ struct DomainMap {
                 } != nil
 
             if match {
-                validWords.append(String(targetValue))
+                validWords.append(targetValue)
             } else {
                 changed = true
             }
@@ -43,7 +43,7 @@ struct DomainMap {
                     continue
                 }
 
-                if domain.count == 1 && validWords[0] == String(domain[0]) {
+                if domain.count == 1 && validWords[0] == domain[0] {
                     validWords = []
                     changed = true
                     break
@@ -58,8 +58,8 @@ struct DomainMap {
         return changed
     }
 
-    func values(for span: Span) -> [String] {
-        domains[span]!.stringArrayRepresentation
+    func domain(for span: Span) -> Domain {
+        domains[span]!
     }
 
     var stringRepresentation: String {
@@ -94,7 +94,7 @@ struct DomainMap {
 // Initializers
 extension DomainMap {
 
-    private static func assign(mustWords: [String], to domains: inout [Span: Domain]) -> Bool {
+    private static func assign(mustWords: [Word], to domains: inout [Span: Domain]) -> Bool {
         let spans = domains.keys
 
         var mustWordSpans = Set<Span>()
@@ -124,8 +124,8 @@ extension DomainMap {
     ///  - mustWords: List of words that must be used in the puzzle. It does not have to be in the lexicon.
     init?(
         crossword: Crossword,
-        lexicon: [String],
-        mustWords: [String] = []
+        lexicon: [Word],
+        mustWords: [Word] = []
     ) {
         let spans = crossword.spans
         let variables = spans.map { Domain(for: $0, using: lexicon) }
@@ -143,6 +143,25 @@ extension DomainMap {
 
         self.crossword = crossword
         self.domains = domains
+    }
+
+    /// Creates CSP variables.
+    ///
+    /// It is a convenient initializer that takes String literals.
+    ///
+    /// - Parameters:
+    ///  - crossword: The crossword to solve.
+    ///  - lexicon: Set of words which the crossword puzzle would use.
+    ///  - mustWords: List of words that must be used in the puzzle. It does not have to be in the lexicon.
+    init?(
+        crossword: Crossword,
+        lexicon: [String],
+        mustWords: [String] = []
+    ) {
+        self.init(
+            crossword: crossword,
+            lexicon: lexicon.map(Word.init),
+            mustWords: mustWords.map(Word.init))
     }
 }
 
@@ -163,11 +182,11 @@ extension DomainMap {
 
 // mutating functions
 extension DomainMap {
-    mutating func update(span: Span, values: [String]) {
+    mutating func update(span: Span, values: [Word]) {
         domains[span]!.update(to: values)
     }
 
-    mutating func update(span: Span, remove word: String) {
+    mutating func update(span: Span, remove word: Word) {
         domains[span]!.update(remove: word)
     }
 }

@@ -5,7 +5,7 @@ import Testing
 @Suite struct DomainTests {
     func nodeConsistencyInitialization() {
         let span = Span(at: (0, 0), length: 3, direction: .across)
-        let wordList = ["ON", "CAT", "DOG", "RABBIT"]
+        let wordList = ["ON", "CAT", "DOG", "RABBIT"].map(Word.init)
         let domain = Domain(for: span, using: wordList)
 
         #expect(domain.stringArrayRepresentation == ["CAT", "DOG"])

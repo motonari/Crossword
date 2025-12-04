@@ -21,8 +21,8 @@ struct CrosswordMaker: ParsableCommand {
     func makeCrossword(
         grid: Grid,
         wordCount: Int,
-        lexicon: [String],
-        mustWords: [String]
+        lexicon: [Word],
+        mustWords: [Word]
     ) throws {
         let layoutStore = try LayoutScore(grid: grid, wordCount: wordCount)
         var progressCount = 0
@@ -59,9 +59,9 @@ struct CrosswordMaker: ParsableCommand {
         }
 
         let lexicon = Lexicon.full
-        let mustWords: [String] =
+        let mustWords: [Word] =
             if let mustWord {
-                [mustWord.uppercased()]
+                [Word(mustWord.uppercased())]
             } else {
                 []
             }

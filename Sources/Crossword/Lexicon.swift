@@ -926,5 +926,5 @@ public struct Lexicon {
         "MILLIONAIRE",
         "RHYTHMIC",
         "MISCHIEVOUS",
-    ]
+    ].map(Word.init)
 }

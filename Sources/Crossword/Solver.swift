@@ -2,14 +2,8 @@ import Collections
 
 public struct Solver {
     let crossword: Crossword
-    let lexicon: [String]
-    let mustWords: [String]
-
-    public init(for crossword: Crossword, lexicon: [String], mustWords: [String] = []) {
-        self.crossword = crossword
-        self.lexicon = lexicon
-        self.mustWords = mustWords
-    }
+    let lexicon: [Word]
+    let mustWords: [Word]
 
     func enforceArcConsistencyInternal(
         domains: inout DomainMap,
@@ -20,7 +14,7 @@ public struct Solver {
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
             if domains.reduceArc(of: targetSpan, using: referenceSpan) {
-                if domains.values(for: targetSpan).isEmpty {
+                if domains.domain(for: targetSpan).isEmpty {
                     success = false
                     break
                 } else {
@@ -51,7 +45,7 @@ public struct Solver {
         // For each word of any single-value domain, remove it from
         // the other domain.
         for referenceSpan in crossword.spans {
-            let domain = domains.values(for: referenceSpan)
+            let domain = domains.domain(for: referenceSpan)
             if domain.count != 1 {
                 continue
             }
@@ -87,7 +81,7 @@ public struct Solver {
                 return
             }
 
-            let candidates = domains.values(for: span)
+            let candidates = domains.domain(for: span)
             if candidates.count == 1 {
                 continue
             }
@@ -140,4 +134,19 @@ public struct Solver {
         return solutions
     }
 
+}
+
+/// Initializers
+extension Solver {
+    /// Creates a solver.
+    ///
+    /// - Parameters:
+    ///  - crossword: The crossword to solve.
+    ///  - lexicon: Set of words that the crossword can use.
+    ///  - mustWord: Set of words that the crossword must use.
+    public init(for crossword: Crossword, lexicon: [Word], mustWords: [Word] = []) {
+        self.crossword = crossword
+        self.lexicon = lexicon
+        self.mustWords = mustWords
+    }
 }
