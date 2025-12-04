@@ -22,13 +22,15 @@ let package = Package(
             .upToNextMajor(from: "1.3.0")
         ),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-algorithms", from: "1.2.0"),
     ],
 
     targets: [
         .target(
             name: "Crossword",
             dependencies: [
-                .product(name: "Collections", package: "swift-collections")
+                .product(name: "Collections", package: "swift-collections"),
+                .product(name: "Algorithms", package: "swift-algorithms"),
             ]),
 
         .executableTarget(

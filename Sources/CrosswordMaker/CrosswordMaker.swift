@@ -24,7 +24,7 @@ struct CrosswordMaker: ParsableCommand {
         lexicon: [Word],
         mustWords: [Word]
     ) throws {
-        let layoutStore = try LayoutScore(grid: grid, wordCount: wordCount)
+        let layoutStore = try LayoutStore(grid: grid, wordCount: wordCount)
         var progressCount = 0
         var intersectionCount = 0
         for blackCellLayout in layoutStore {
@@ -53,7 +53,7 @@ struct CrosswordMaker: ParsableCommand {
         let grid = Grid(width: width, height: height)
 
         if generateLayoutFile {
-            let fileURL = try LayoutScore.generateLayoutFile(grid: grid, wordCount: count)
+            let fileURL = try LayoutStore.generateLayoutFile(grid: grid, wordCount: count)
             print("Layout file was created at: \(fileURL.path)")
             return
         }

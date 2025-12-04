@@ -41,3 +41,10 @@ extension Word {
         String(characters)
     }
 }
+
+/// Description
+extension Word: CustomStringConvertible {
+    public var description: String {
+        String(characters)
+    }
+}

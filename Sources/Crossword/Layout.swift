@@ -65,6 +65,16 @@ extension Layout {
     }
 }
 
+extension Layout: Hashable {
+    public static func == (lhs: Layout, rhs: Layout) -> Bool {
+        return lhs.storage == rhs.storage
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        storage.hash(into: &hasher)
+    }
+}
+
 /// Cell accessors
 extension Layout {
     enum Color {

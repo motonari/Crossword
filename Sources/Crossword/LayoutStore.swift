@@ -1,10 +1,36 @@
+import Algorithms
+import Collections
 import Foundation
 
-public struct LayoutScore: Sequence {
+public struct LayoutStore {
     let fileURL: URL
     let grid: Grid
     let wordCount: Int
 
+    private static func defaultLayoutFileURL(grid: Grid, wordCount: Int) -> URL {
+        let directoryURL = URL(
+            fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
+        let fileName = "crossword_layout_\(grid.width)x\(grid.height)_\(wordCount).data"
+        let fileURL = directoryURL.appendingPathComponent(fileName, isDirectory: false)
+        return fileURL
+    }
+
+}
+
+/// Initializers
+extension LayoutStore {
+    public init(grid: Grid, wordCount: Int) throws {
+        self.grid = grid
+        self.wordCount = wordCount
+        self.fileURL = Self.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
+
+        // preflight check
+        _ = try Iterator(layoutFileURL: fileURL, grid: grid)
+    }
+}
+
+/// Sequence protocol implementation
+extension LayoutStore: Sequence {
     public struct Iterator: IteratorProtocol {
         public typealias Element = Layout
 
@@ -26,29 +52,23 @@ public struct LayoutScore: Sequence {
 
     }
 
-    public init(grid: Grid, wordCount: Int) throws {
-        self.grid = grid
-        self.wordCount = wordCount
-        self.fileURL = Self.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
-
-        // preflight check
-        _ = try Iterator(layoutFileURL: fileURL, grid: grid)
+    public func makeIterator() -> Iterator {
+        let fileURL = Self.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
+        return try! Iterator(layoutFileURL: fileURL, grid: grid)
     }
+}
 
+/// Properties
+extension LayoutStore {
     public var count: Int {
         let attributes = try! FileManager.default.attributesOfItem(atPath: fileURL.path)
         let fileSize = attributes[FileAttributeKey.size] as! UInt64
         return Int(fileSize / UInt64(Layout.storageSize(for: grid)))
     }
+}
 
-    private static func defaultLayoutFileURL(grid: Grid, wordCount: Int) -> URL {
-        let directoryURL = URL(
-            fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
-        let fileName = "crossword_layout_\(grid.width)x\(grid.height)_\(wordCount).data"
-        let fileURL = directoryURL.appendingPathComponent(fileName, isDirectory: false)
-        return fileURL
-    }
-
+/// Generators
+extension LayoutStore {
     public static func generateLayoutFile(
         grid: Grid, wordCount: Int, maxLayoutCount: Int = 1_000_000
     ) throws -> URL {
@@ -64,11 +84,13 @@ public struct LayoutScore: Sequence {
             if layouts.count % 1000 == 0 {
                 print("\(layouts.count) / \(maxLayoutCount)")
             }
-            layouts.append(layout)
-        }
 
-        // Sort by intersection count
-        layouts.sort { $0.intersectionCount(in: grid) > $1.intersectionCount(in: grid) }
+            let insertingIndex = layouts.partitioningIndex {
+                $0.intersectionCount(in: grid) >= layout.intersectionCount(in: grid)
+            }
+
+            layouts.insert(layout, at: insertingIndex)
+        }
 
         let fileHandle = try FileHandle(forWritingTo: fileURL)
         for layout in layouts {
@@ -78,10 +100,4 @@ public struct LayoutScore: Sequence {
 
         return fileURL
     }
-
-    public func makeIterator() -> Iterator {
-        let fileURL = Self.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
-        return try! Iterator(layoutFileURL: fileURL, grid: grid)
-    }
-
 }
