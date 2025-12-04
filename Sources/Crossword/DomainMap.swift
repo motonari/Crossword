@@ -94,9 +94,9 @@ struct DomainMap {
 // Initializers
 extension DomainMap {
 
-    private static func assign(mustWords: [Word], to domains: inout [Span: Domain]) -> Bool {
-        let spans = domains.keys
-
+    private static func assign(spans: [Span], mustWords: [Word], to domains: inout [Span: Domain])
+        -> Bool
+    {
         var mustWordSpans = Set<Span>()
         for mustWord in mustWords {
             // Find span that can have mustWord.
@@ -136,7 +136,7 @@ extension DomainMap {
         }
 
         var domains = Dictionary(uniqueKeysWithValues: zip(spans, variables))
-        guard Self.assign(mustWords: mustWords, to: &domains) else {
+        guard Self.assign(spans: spans, mustWords: mustWords, to: &domains) else {
             // Unable to assign must-words.
             return nil
         }
