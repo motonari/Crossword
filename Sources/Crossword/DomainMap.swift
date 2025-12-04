@@ -20,16 +20,16 @@ struct DomainMap {
 
         var validWords = [String]()
         var changed = false
-        for targetValue in domains[targetSpan]!.values {
-            let overlapCharacter = targetValue.character(at: targetCharIndex)
+        for targetValue in domains[targetSpan]! {
+            let overlapCharacter = targetValue[targetCharIndex]
 
             let match =
-                referenceDomain.values.first { referenceValue in
-                    referenceValue.character(at: referenceCharIndex) == overlapCharacter
+                referenceDomain.first { referenceValue in
+                    referenceValue[referenceCharIndex] == overlapCharacter
                 } != nil
 
             if match {
-                validWords.append(targetValue)
+                validWords.append(String(targetValue))
             } else {
                 changed = true
             }
@@ -43,7 +43,7 @@ struct DomainMap {
                     continue
                 }
 
-                if domain.values.count == 1 && validWords[0] == domain.values[0] {
+                if domain.count == 1 && validWords[0] == String(domain[0]) {
                     validWords = []
                     changed = true
                     break
@@ -59,23 +59,23 @@ struct DomainMap {
     }
 
     func values(for span: Span) -> [String] {
-        domains[span]!.values
+        domains[span]!.stringArrayRepresentation
     }
 
-    var asString: String {
+    var stringRepresentation: String {
         let charRow = [Character](repeating: "#", count: crossword.grid.width)
         var charGrid = [[Character]](repeating: charRow, count: crossword.grid.height)
 
         for (span, domain) in domains {
-            guard domain.values.count == 1 else {
+            guard domain.count == 1 else {
                 fatalError("asString can be used after completion.")
             }
 
-            let value = domain.values[0]
+            let value = domain[0]
             for index in 0..<span.length {
                 let x = span.start.x + span.direction.deltaX * index
                 let y = span.start.y + span.direction.deltaY * index
-                charGrid[y][x] = value.character(at: index)
+                charGrid[y][x] = value[index]
             }
         }
 
@@ -150,7 +150,7 @@ extension DomainMap {
 extension DomainMap {
     var complete: Bool {
         domains.values.allSatisfy { domain in
-            domain.values.count == 1
+            domain.count == 1
         }
     }
 
@@ -164,23 +164,19 @@ extension DomainMap {
 // mutating functions
 extension DomainMap {
     mutating func update(span: Span, values: [String]) {
-        domains[span]!.values = values
+        domains[span]!.update(to: values)
     }
 
     mutating func update(span: Span, remove word: String) {
-        let currentValues = domains[span]!.values
-        guard let index = currentValues.firstIndex(of: word) else {
-            return
-        }
-        domains[span]!.values.remove(at: index)
+        domains[span]!.update(remove: word)
     }
 }
 
 extension DomainMap: CustomStringConvertible, CustomDebugStringConvertible {
     public var description: String {
         let count = domains.count
-        let singleDomainCount = domains.count { (_, domain) in domain.values.count == 1 }
-        let zeroDomainCount = domains.count { (_, domain) in domain.values.count == 0 }
+        let singleDomainCount = domains.count { (_, domain) in domain.count == 1 }
+        let zeroDomainCount = domains.count { (_, domain) in domain.count == 0 }
         return
             "DomainMap(total = \(count), solved = \(singleDomainCount), failed = \(zeroDomainCount)"
     }

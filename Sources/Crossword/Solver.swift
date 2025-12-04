@@ -133,7 +133,7 @@ public struct Solver {
         var solutions = [String]()
         var stop = false
         solveInternal(domains: domains, stop: &stop) { solution, stop in
-            solutions.append(solution.asString)
+            solutions.append(solution.stringRepresentation)
             stop = (solutions.count > 0)
         }
 

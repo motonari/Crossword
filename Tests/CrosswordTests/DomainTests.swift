@@ -8,7 +8,7 @@ import Testing
         let wordList = ["ON", "CAT", "DOG", "RABBIT"]
         let domain = Domain(for: span, using: wordList)
 
-        #expect(domain.values == ["CAT", "DOG"])
+        #expect(domain.stringArrayRepresentation == ["CAT", "DOG"])
     }
 
 }
