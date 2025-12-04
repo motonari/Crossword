@@ -6,15 +6,15 @@ public struct Solver {
     let mustWords: [Word]
 
     func enforceArcConsistencyInternal(
-        domains: inout DomainMap,
+        solution: inout Solution,
         workQueue: inout Deque<SpanPair>
     ) -> Bool {
         var success = true
         while let spanPair = workQueue.popFirst() {
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
-            if domains.reduceArc(of: targetSpan, using: referenceSpan) {
-                if domains.domain(for: targetSpan).isEmpty {
+            if solution.reduceArc(of: targetSpan, using: referenceSpan) {
+                if solution.domain(for: targetSpan).isEmpty {
                     success = false
                     break
                 } else {
@@ -28,24 +28,24 @@ public struct Solver {
         return success
     }
 
-    func enforceArcConsistency(domains: inout DomainMap) -> Bool {
+    func enforceArcConsistency(solution: inout Solution) -> Bool {
         var workQueue = Deque(crossword.overlaps.keys)
-        return enforceArcConsistencyInternal(domains: &domains, workQueue: &workQueue)
+        return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
     }
 
-    func enforceArcConsistency(domains: inout DomainMap, span: Span) -> Bool {
+    func enforceArcConsistency(solution: inout Solution, span: Span) -> Bool {
         let workItems = crossword.spansIntersecting(with: span).map { SpanPair($0, span) }
         var workQueue = Deque(workItems)
-        return enforceArcConsistencyInternal(domains: &domains, workQueue: &workQueue)
+        return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
     }
 
     /// Enforce the rule: Crossword puzzle cannot use a same word
     /// multiple times.
-    func enforceGlobalConsistency(domains: inout DomainMap) -> Bool {
+    func enforceGlobalConsistency(solution: inout Solution) -> Bool {
         // For each word of any single-value domain, remove it from
         // the other domain.
         for referenceSpan in crossword.spans {
-            let domain = domains.domain(for: referenceSpan)
+            let domain = solution.domain(for: referenceSpan)
             if domain.count != 1 {
                 continue
             }
@@ -58,19 +58,19 @@ public struct Solver {
                     continue
                 }
 
-                domains.update(span: targetSpan, remove: word)
+                solution.update(span: targetSpan, remove: word)
             }
         }
 
-        return domains.valid
+        return solution.solvable
     }
 
     func solveInternal(
-        domains: DomainMap, stop: inout Bool,
-        solutionReporter: (DomainMap, inout Bool) -> Void
+        solution: Solution, stop: inout Bool,
+        solutionReporter: (Solution, inout Bool) -> Void
     ) {
-        if domains.complete {
-            solutionReporter(domains, &stop)
+        if solution.complete {
+            solutionReporter(solution, &stop)
             if stop {
                 return
             }
@@ -81,7 +81,7 @@ public struct Solver {
                 return
             }
 
-            let candidates = domains.domain(for: span)
+            let candidates = solution.domain(for: span)
             if candidates.count == 1 {
                 continue
             }
@@ -91,24 +91,25 @@ public struct Solver {
                     return
                 }
 
-                var newDomains = domains
-                newDomains.update(span: span, values: [value])
-                if !enforceGlobalConsistency(domains: &newDomains) {
+                var newSolution = solution
+                newSolution.update(span: span, values: [value])
+                if !enforceGlobalConsistency(solution: &newSolution) {
                     continue
                 }
 
-                if !enforceArcConsistency(domains: &newDomains, span: span) {
+                if !enforceArcConsistency(solution: &newSolution, span: span) {
                     continue
                 }
 
-                solveInternal(domains: newDomains, stop: &stop, solutionReporter: solutionReporter)
+                solveInternal(
+                    solution: newSolution, stop: &stop, solutionReporter: solutionReporter)
             }
         }
     }
 
     public func solve() -> [String] {
         guard
-            var domains = DomainMap(
+            var solution = Solution(
                 crossword: crossword,
                 lexicon: lexicon,
                 mustWords: mustWords)
@@ -116,17 +117,17 @@ public struct Solver {
             return []
         }
 
-        guard enforceGlobalConsistency(domains: &domains) else {
+        guard enforceGlobalConsistency(solution: &solution) else {
             return []
         }
 
-        guard enforceArcConsistency(domains: &domains) else {
+        guard enforceArcConsistency(solution: &solution) else {
             return []
         }
 
         var solutions = [String]()
         var stop = false
-        solveInternal(domains: domains, stop: &stop) { solution, stop in
+        solveInternal(solution: solution, stop: &stop) { solution, stop in
             let renderer = SolutionRenderer()
             let result = renderer.render(solution: solution)
             solutions.append(result)

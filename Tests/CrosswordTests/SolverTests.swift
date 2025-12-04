@@ -13,8 +13,8 @@ import Testing
         let wordList = ["CAT", "DOG", "OWL"].map(Word.init)
         let solver = Solver(for: crossword, lexicon: wordList, mustWords: [])
 
-        var domains = try #require(DomainMap(crossword: crossword, lexicon: wordList))
-        try #require(solver.enforceArcConsistency(domains: &domains))
+        var solution = try #require(Solution(crossword: crossword, lexicon: wordList))
+        try #require(solver.enforceArcConsistency(solution: &solution))
 
         let span1 = crossword.span(at: Location(0, 1), direction: .across)!
         let span2 = crossword.span(at: Location(0, 0), direction: .down)!
@@ -26,8 +26,8 @@ import Testing
         // Since span1's domain is now just ["OWL"], span2's value
         // must be "DOG".
 
-        #expect(domains.domain(for: span1).stringArrayRepresentation == ["OWL"])
-        #expect(domains.domain(for: span2).stringArrayRepresentation == ["DOG"])
+        #expect(solution.domain(for: span1).stringArrayRepresentation == ["OWL"])
+        #expect(solution.domain(for: span2).stringArrayRepresentation == ["DOG"])
     }
 
     @Test func solve() throws {

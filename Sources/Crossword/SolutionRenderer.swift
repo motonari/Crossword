@@ -277,7 +277,7 @@ struct SolutionRenderer {
         return result
     }
 
-    func render(solution: DomainMap) -> String {
+    func render(solution: Solution) -> String {
         let layout = jsonRepresentation(
             of: solution.crossword.layout, in: solution.crossword.grid)
 
