@@ -13,24 +13,6 @@ extension HTMLSolutionRenderer {
 
 // SolutionRenderer
 extension HTMLSolutionRenderer: SolutionRenderer {
-    private func jsonRepresentation(of layout: Layout, in grid: Grid) -> String {
-        var result = ""
-        for y in 0..<grid.height {
-            var row = [String]()
-            for x in 0..<grid.width {
-                let color = layout.cell(at: Location(x, y), in: grid)
-                switch color {
-                case .white:
-                    row.append("-1")
-                case .black:
-                    row.append(" 0")
-                }
-            }
-            let rowString = String(format: "[%@],", row.joined(separator: ", "))
-            result.append(rowString)
-        }
-        return result
-    }
 
     public func render(solution: Solution) throws {
         let template =
@@ -49,50 +31,44 @@ extension HTMLSolutionRenderer: SolutionRenderer {
 
                     body {
                         font-family: 'Comic Sans MS', cursive, sans-serif;
-                        font-size: 14pt;
-                        line-height: 1.5;
-                        color: #333;
+                        color: #34495e;
                         background: white;
                         max-width: 8.5in;
                         margin: 0 auto;
-                        padding: 1in;
+                        padding: 0in;
                     }
 
                     h1 {
                         text-align: center;
-                        font-size: 24pt;
-                        font-weight: bold;
-                        margin-bottom: 30pt;
-                        color: #1e90ff;
-                        text-shadow: 1px 1px 2px #a0c4ff;
+                        font-size: 22pt;
+                        font-weight: normal;
+                        margin-bottom: 8pt;
+                        color: #146B3A;
+                        text-shadow: 1px 1px 1px #002C23;
                     }
 
                     .puzzle-container {
                         display: flex;
-                        gap: 40pt;
-                        margin-bottom: 30pt;
+                        gap: 10pt;
+                        margin-bottom: 2pt;
                         break-inside: avoid;
                         flex-wrap: wrap;
                         justify-content: center;
                     }
 
                     .grid-container {
-                        flex: 1 1 350px;
                         break-inside: avoid;
-                        box-shadow: 0 0 15px rgba(30, 144, 255, 0.5);
-                        border-radius: 12px;
-                        padding: 8px;
-                        background: #d0e6ff;
+                        padding: 0px;
                     }
 
                     .grid {
                         display: grid;
-                        grid-template-columns: repeat(12, 35px);
-                        grid-template-rows: repeat(12, 35px);
+                        grid-template-columns: repeat(%d, 35px);
+                        grid-template-rows: repeat(%d, 35px);
                         gap: 1px;
-                        background: #1e90ff;
-                        border-radius: 10px;
-                        padding: 4px;
+                        background: #165B33;
+                        border-radius: 3px;
+                        padding: 2px;
                         user-select: none;
                         justify-content: center;
                     }
@@ -101,7 +77,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                         width: 35px;
                         height: 35px;
                         background: white;
-                        border-radius: 5px;
+                        border-radius: 3px;
                         display: flex;
                         flex-direction: column;
                         align-items: flex-start;
@@ -113,7 +89,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     }
 
                     .cell.black {
-                        background: #2c3e50;
+                        background: #165B33;
                         border-radius: 5px;
                     }
 
@@ -127,98 +103,44 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     }
 
                     .clues-container {
-                        flex: 1 1 300px;
+                        display: flex;
+                        flex: 1 1 400px;
                         break-inside: avoid;
-                        background: #f0f8ff;
-                        padding: 15px 20px;
-                        border-radius: 12px;
-                        box-shadow: 0 0 15px rgba(30, 144, 255, 0.3);
+                        border-radius: 8px;
                     }
 
                     .clues-section {
-                        margin-bottom: 25pt;
+                        margin-bottom: 2pt;
+                        flex: 1 1 200px;
                     }
 
                     .clues-section h3 {
-                        font-size: 18pt;
+                        font-size: 12pt;
                         font-weight: bold;
                         margin-bottom: 12pt;
-                        border-bottom: 3px solid #1e90ff;
-                        color: #1e90ff;
+                        border-bottom: 3px solid #165B33;
                         text-transform: uppercase;
                         letter-spacing: 1.5px;
                         padding-bottom: 6pt;
                     }
 
                     .clue {
-                        margin-bottom: 10pt;
+                        margin-bottom: 5pt;
                         padding-left: 12pt;
-                        border-left: 6px solid #74b9ff;
-                        font-size: 14pt;
-                        color: #34495e;
-                        font-family: 'Comic Sans MS', cursive, sans-serif;
-                        line-height: 1.3;
-                    }
-
-                    .instructions {
-                        margin-top: 30pt;
-                        padding: 18pt;
-                        border: 2px solid #1e90ff;
-                        border-radius: 12px;
-                        font-size: 13pt;
-                        background: #d0e6ff;
-                        color: #2c3e50;
-                        font-family: 'Comic Sans MS', cursive, sans-serif;
-                        text-align: center;
-                        box-shadow: inset 0 0 12px #74b9ff;
+                        border-left: 6px solid #90EE90;
+                        font-size: 10pt;
+                        line-height: 1.0;
                     }
 
                     @media print {
-                        body {
-                            padding: 0.5in;
-                        }
-                        .grid {
-                            grid-template-columns: repeat(15, 22px);
-                            grid-template-rows: repeat(15, 22px);
-                            padding: 3px;
-                        }
-                        .cell {
-                            width: 22px;
-                            height: 22px;
-                            font-size: 12pt;
-                        }
-                        .cell .number {
-                            font-size: 8pt;
-                        }
-                        .clues-section h3 {
-                            font-size: 16pt;
-                        }
-                        .clue {
-                            font-size: 12pt;
-                        }
-                        .instructions {
-                            font-size: 12pt;
-                            padding: 14pt;
-                        }
-                    }
-
-                    @media (max-width: 700px) {
-                        .puzzle-container {
-                            flex-direction: column;
-                            gap: 30pt;
-                        }
-                        .grid-container, .clues-container {
-                            flex: 1 1 100%%;
-                        }
-                        .grid {
-                            justify-self: center;
+                        .page-break {
+                            break-after: page;
                         }
                     }
                 </style>
             </head>
             <body>
-                <h1>Crossword Puzzle Challenge!</h1>
-
+                <h1>Birthday Crossword Challenge</h1>
                 <div class="puzzle-container">
                     <div class="grid-container">
                         <div class="grid" id="grid"></div>
@@ -226,37 +148,30 @@ extension HTMLSolutionRenderer: SolutionRenderer {
 
                     <div class="clues-container">
                         <div class="clues-section">
-                            <h3>Across</h3>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
-                            <div class="clue">8. Swift data structure (5)</div>
-                            <div class="clue">11. Game world generator (4)</div>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
-                            <div class="clue">8. Swift data structure (5)</div>
-                            <div class="clue">11. Game world generator (4)</div>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
+                        <h3>Across</h3>
+                        %@
                         </div>
 
                         <div class="clues-section">
-                            <h3>Down</h3>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
-                            <div class="clue">8. Swift data structure (5)</div>
-                            <div class="clue">11. Game world generator (4)</div>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
-                            <div class="clue">8. Swift data structure (5)</div>
-                            <div class="clue">11. Game world generator (4)</div>
-                            <div class="clue">1. Programming language by Apple (5)</div>
-                            <div class="clue">6. Minecraft block for light (4)</div>
+                        <h3>Down</h3>
+                        %@
                         </div>
                     </div>
                 </div>
 
-                <div class="instructions">
-                    <strong>How to play:</strong> Use a pencil or crayon to fill each white square with a letter. Colored blocks are black squares where no letters go. Numbers in squares show where clues start. Have fun solving this tech and gaming crossword puzzle!
+                <div class="page-break"></div>
+
+                <h1>Answers</h1>
+                <div class="clues-container">
+                    <div class="clues-section">
+                        <h3>Across</h3>
+                        %@
+                    </div>
+
+                    <div class="clues-section">
+                        <h3>Down</h3>
+                        %@
+                    </div>
                 </div>
 
                 <script>
@@ -291,11 +206,114 @@ extension HTMLSolutionRenderer: SolutionRenderer {
             </html>
             """
 
-        let layout = jsonRepresentation(
-            of: solution.crossword.layout, in: solution.crossword.grid)
+        let clueIDs = clueIDs(of: solution.crossword)
 
-        let result = String(format: template, layout)
+        let layout = layoutAndClueIDs(
+            of: solution.crossword, clueIDs: clueIDs)
+
+        let acrossClues = clues(of: solution, clueIDs: clueIDs, direction: .across)
+        let downClues = clues(of: solution, clueIDs: clueIDs, direction: .down)
+
+        let acrossAnswers = answers(of: solution, clueIDs: clueIDs, direction: .across)
+        let downAnswers = answers(of: solution, clueIDs: clueIDs, direction: .down)
+
+        let result = String(
+            format: template,
+            solution.crossword.grid.width,
+            solution.crossword.grid.height,
+            acrossClues,
+            downClues,
+            acrossAnswers,
+            downAnswers,
+            layout)
 
         try result.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
+    private func clueIDs(of crossword: Crossword) -> [Location: Int] {
+        let grid = crossword.grid
+        var result = [Location: Int]()
+        var clueID = 1
+        for location in Locations(grid: grid) {
+            if crossword.span(at: location, direction: .across) != nil
+                || crossword.span(at: location, direction: .down) != nil
+            {
+                result[location] = clueID
+                clueID += 1
+            }
+        }
+        return result
+    }
+
+    private func layoutAndClueIDs(of crossword: Crossword, clueIDs: [Location: Int]) -> String {
+        let grid = crossword.grid
+        let layout = crossword.layout
+
+        var result = ""
+        for y in 0..<grid.height {
+            var row = [String]()
+            for x in 0..<grid.width {
+                let location = Location(x, y)
+                let color = layout.cell(at: location, in: grid)
+
+                switch color {
+                case .white:
+                    if let id = clueIDs[location] {
+                        row.append(String(id))
+                    } else {
+                        row.append("-1")
+                    }
+                case .black:
+                    row.append(" 0")
+                }
+            }
+            let rowString = String(format: "[%@],", row.joined(separator: ", "))
+            result.append(rowString)
+        }
+        return result
+    }
+
+    private func clues(
+        of solution: Solution,
+        clueIDs: [Location: Int],
+        direction: Direction
+    ) -> String {
+        let crossword = solution.crossword
+        let grid = crossword.grid
+        let lexicon = Lexicon()
+
+        var result = ""
+        for location in Locations(grid: grid) {
+            guard let span = crossword.span(at: location, direction: direction) else {
+                continue
+            }
+
+            let word = solution.domain(for: span).first!
+            let clue = lexicon.clue(for: word) ?? "Your name?"
+            let clueID = clueIDs[location]!
+            result.append("<div class=\"clue\">\(clueID). \(clue)</div>")
+        }
+        return result
+    }
+
+    private func answers(
+        of solution: Solution,
+        clueIDs: [Location: Int],
+        direction: Direction
+    ) -> String {
+        let crossword = solution.crossword
+        let grid = crossword.grid
+
+        var result = ""
+        for location in Locations(grid: grid) {
+            guard let span = crossword.span(at: location, direction: direction) else {
+                continue
+            }
+
+            let word = solution.domain(for: span).first!
+            let clueID = clueIDs[location]!
+            result.append("<div class=\"clue\">\(clueID). \(word)</div>")
+        }
+        return result
     }
 }
