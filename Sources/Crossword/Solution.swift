@@ -1,3 +1,5 @@
+import CryptoKit
+
 /// Domain of CSP variables.
 ///
 /// When all the domains have one and only one possible value, it is a
@@ -212,6 +214,16 @@ extension Solution {
             let domainCount2 = domain(for: span2).count
             return domainCount1 < domainCount2
         }
+    }
+}
+
+extension Solution {
+    var digest: SHA256.Digest {
+        var hasher = SHA256()
+        for span in crossword.spans {
+            domains[span]!.hash(into: &hasher)
+        }
+        return hasher.finalize()
     }
 }
 

@@ -1,3 +1,6 @@
+import CryptoKit
+import Foundation
+
 struct Domain {
     private var values = [Word]()
 }
@@ -56,6 +59,15 @@ extension Domain {
             return
         }
         values.remove(at: index)
+    }
+}
+
+extension Domain {
+    func hash<F: HashFunction>(into hasher: inout F) {
+        for word in values {
+            let data = Data(word.stringRepresentation.utf8)
+            hasher.update(data: data)
+        }
     }
 }
 

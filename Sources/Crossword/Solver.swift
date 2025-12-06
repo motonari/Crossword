@@ -1,9 +1,20 @@
 import Collections
+import CryptoKit
 
 public struct Solver {
+    class VisitedSolutions {
+        var visitedSet = Set<SHA256Digest>()
+        func firstVisit(_ solution: Solution) -> Bool {
+            let digest = solution.digest
+            let (inserted, _) = visitedSet.insert(digest)
+            return inserted
+        }
+    }
+
     let crossword: Crossword
     let lexicon: [Word]
     let mustWords: [Word]
+    let visitedSolutions = VisitedSolutions()
 
     func enforceArcConsistencyInternal(
         solution: inout Solution,
@@ -63,6 +74,10 @@ public struct Solver {
         solution: Solution, stop: inout Bool,
         solutionReporter: (Solution, inout Bool) -> Void
     ) {
+        guard visitedSolutions.firstVisit(solution) else {
+            return
+        }
+
         if solution.complete {
             solutionReporter(solution, &stop)
             if stop {

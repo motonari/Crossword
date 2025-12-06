@@ -39,7 +39,7 @@ import Testing
         let layout = Layout(grid: grid, blackCells: [(1, 0), (2, 0), (1, 2), (2, 2)])
         let crossword = Crossword(grid: grid, with: layout)
         let wordList = ["CAT", "DOG", "OWL"].map(Word.init)
-        let solver = Solver(for: crossword, lexicon: wordList)
+        var solver = Solver(for: crossword, lexicon: wordList)
 
         let solutions = solver.solve()
 

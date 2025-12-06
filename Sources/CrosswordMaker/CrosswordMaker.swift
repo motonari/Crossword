@@ -135,7 +135,7 @@ struct CrosswordMaker: ParsableCommand {
 
         let solver = Solver(for: crossword, lexicon: lexicon, mustWords: mustWords)
 
-        let solutions = solver.solve()
+        _ = solver.solve()
     }
 
     mutating func run() throws {
