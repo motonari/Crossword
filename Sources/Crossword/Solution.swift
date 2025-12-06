@@ -192,6 +192,27 @@ extension Solution {
     mutating func update(span: Span, remove word: Word) {
         domains[span]!.update(remove: word)
     }
+
+    mutating func update(except spanNotToUpdate: Span, remove word: Word) {
+        let savedDomain = domains[spanNotToUpdate]!
+        for index in domains.values.indices {
+            domains.values[index].update(remove: word)
+        }
+        domains[spanNotToUpdate] = savedDomain
+    }
+}
+
+extension Solution {
+    /// List of unsolved spans.
+    var unsolvedSpans: [Span] {
+        crossword.spans.filter { span in
+            domain(for: span).count > 1
+        }.sorted { span1, span2 in
+            let domainCount1 = domain(for: span1).count
+            let domainCount2 = domain(for: span2).count
+            return domainCount1 < domainCount2
+        }
+    }
 }
 
 extension Solution: CustomStringConvertible, CustomDebugStringConvertible {

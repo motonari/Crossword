@@ -38,7 +38,7 @@ extension Layout {
     /// - Parameters:
     ///  - grid: The size of the crossword.
     ///  - blackCells: List of black cell locations.
-    init(grid: Grid, blackCells: [(Int, Int)]) {
+    public init(grid: Grid, blackCells: [(Int, Int)]) {
         self.init(grid: grid, blackCells: blackCells.map(Location.init))
     }
 }

@@ -53,13 +53,7 @@ public struct Solver {
             let word = domain[0]
             // referenceSpan has been reduced to single value domain
             // and the word should be removed from other domains.
-            for targetSpan in crossword.spans {
-                if targetSpan == referenceSpan {
-                    continue
-                }
-
-                solution.update(span: targetSpan, remove: word)
-            }
+            solution.update(except: referenceSpan, remove: word)
         }
 
         return solution.solvable
@@ -76,7 +70,7 @@ public struct Solver {
             }
         }
 
-        for span in crossword.spans {
+        for span in solution.unsolvedSpans {
             if stop {
                 return
             }
@@ -93,7 +87,8 @@ public struct Solver {
 
                 var newSolution = solution
                 newSolution.update(span: span, values: [value])
-                if !enforceGlobalConsistency(solution: &newSolution) {
+                newSolution.update(except: span, remove: value)
+                if !newSolution.solvable {
                     continue
                 }
 

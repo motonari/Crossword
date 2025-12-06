@@ -54,6 +54,90 @@ struct CrosswordMaker: ParsableCommand {
         }
     }
 
+    func makeCrosswordTest(
+        grid: Grid,
+        wordCount: Int,
+        lexicon: [Word],
+        mustWords: [Word]
+    ) {
+        let layout = Layout(
+            grid: grid,
+            blackCells: [
+                (4, 0),
+                (5, 0),
+
+                (1, 1),
+                (3, 1),
+                (5, 1),
+                (7, 1),
+                (8, 1),
+                (10, 1),
+
+                (1, 2),
+                (7, 2),
+
+                (0, 3),
+                (1, 3),
+                (2, 3),
+                (3, 3),
+                (5, 3),
+                (6, 3),
+                (7, 3),
+                (8, 3),
+                (10, 3),
+
+                (0, 4),
+                (1, 4),
+                (3, 4),
+                (5, 4),
+                (7, 4),
+
+                (0, 5),
+                (7, 5),
+                (8, 5),
+                (10, 5),
+
+                (1, 6),
+                (3, 6),
+                (5, 6),
+                (7, 6),
+                (11, 6),
+
+                (8, 7),
+                (9, 7),
+                (10, 7),
+                (11, 7),
+
+                (1, 8),
+                (3, 8),
+                (5, 8),
+                (7, 8),
+                (8, 8),
+                (10, 8),
+
+                (0, 9),
+                (10, 9),
+
+                (0, 10),
+                (1, 10),
+                (3, 10),
+                (5, 10),
+                (6, 10),
+                (7, 10),
+                (8, 10),
+                (10, 10),
+
+                (8, 11),
+            ])
+
+        let grid = Grid(width: width, height: height)
+        let crossword = Crossword(grid: grid, with: layout)
+
+        let solver = Solver(for: crossword, lexicon: lexicon, mustWords: mustWords)
+
+        let solutions = solver.solve()
+    }
+
     mutating func run() throws {
         let grid = Grid(width: width, height: height)
 
