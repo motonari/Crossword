@@ -41,7 +41,10 @@ import Testing
         let wordList = ["CAT", "DOG", "OWL"].map(Word.init)
         let solver = Solver(for: crossword, lexicon: wordList)
 
-        let solutions = solver.solve()
+        var solutions = [Solution]()
+        try solver.solve { solution, _ in
+            solutions.append(solution)
+        }
 
         try #require(solutions.count == 1)
         let solution = try #require(solutions.first)

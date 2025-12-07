@@ -52,10 +52,15 @@ struct CrosswordMaker: ParsableCommand {
 
             let solver = Solver(for: crossword, lexicon: lexicon, mustWords: mustWords)
 
-            let solutions = solver.solve()
-            if !solutions.isEmpty {
+            var solutionWasFound = false
+            try solver.solve { (solution, stop) in
                 let renderer = HTMLSolutionRenderer(to: URL(fileURLWithPath: outputFileName))
-                try renderer.render(solution: solutions[0])
+                try renderer.render(solution: solution)
+                stop = true
+                solutionWasFound = true
+            }
+
+            if solutionWasFound {
                 break
             }
         }

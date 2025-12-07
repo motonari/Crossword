@@ -135,41 +135,37 @@ extension Solver {
 /// Backtracking
 extension Solver {
     /// Solve the crossword.
-
-    public func solve() -> [Solution] {
+    public func solve(solutionReporter: (Solution, inout Bool) throws -> Void) throws {
         guard
             var solution = Solution(
                 crossword: crossword,
                 lexicon: lexicon,
                 mustWords: mustWords)
         else {
-            return []
+            return
         }
 
         guard enforceGlobalConsistency(solution: &solution) else {
-            return []
+            return
         }
 
         guard enforceArcConsistency(solution: &solution) else {
-            return []
+            return
         }
 
-        var solutions = [Solution]()
         var stop = false
-        solveInternal(consistentSolution: solution, stop: &stop) { solution, stop in
-            solutions.append(solution)
-            stop = (solutions.count > 0)
-        }
-
-        return solutions
+        try solveInternal(
+            consistentSolution: solution,
+            stop: &stop,
+            solutionReporter: solutionReporter)
     }
 
     private func solveInternalByAssigningValue(
         to span: Span,
         consistentSolution solution: Solution,
         stop: inout Bool,
-        solutionReporter: (Solution, inout Bool) -> Void
-    ) {
+        solutionReporter: (Solution, inout Bool) throws -> Void
+    ) throws {
         let candidates = solution.domain(for: span)
         guard candidates.count > 1 else {
             return
@@ -191,7 +187,7 @@ extension Solver {
                 continue
             }
 
-            solveInternal(
+            try solveInternal(
                 consistentSolution: newSolution,
                 stop: &stop,
                 solutionReporter: solutionReporter)
@@ -205,8 +201,8 @@ extension Solver {
     private func solveInternal(
         consistentSolution solution: Solution,
         stop: inout Bool,
-        solutionReporter: (Solution, inout Bool) -> Void
-    ) {
+        solutionReporter: (Solution, inout Bool) throws -> Void
+    ) throws {
         // Optimization by memorization. If we have seen this solution
         // before, we don't have to process it again.
         guard visitedSolutions.firstVisit(solution) else {
@@ -215,14 +211,14 @@ extension Solver {
 
         if solution.complete {
             // Solution is completed; report it!
-            solutionReporter(solution, &stop)
+            try solutionReporter(solution, &stop)
             if stop {
                 return
             }
         }
 
         for span in solution.unsolvedSpans {
-            solveInternalByAssigningValue(
+            try solveInternalByAssigningValue(
                 to: span,
                 consistentSolution: solution,
                 stop: &stop,
