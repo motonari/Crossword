@@ -941,7 +941,7 @@ public struct Lexicon {
         ("WISH", "Hope want."),
         ("MAJOR", "Big important."),
         ("SLITHER", "Snake crawl."),
-        ("ANTAGONIST", "Story bad guy."),
+        ("ANTAGONIST", "The bad guy in a story."),
         ("GRADUAL", "Slow step."),
         ("SOAR", "Fly high."),
         ("LEAP", "Big jump."),

@@ -77,7 +77,7 @@ import Testing
         let wordList = ["CAT", "DOG", "OWL"]
         var solution = try #require(Solution(crossword: crossword, lexicon: wordList))
 
-        #expect(solution.reduceDomain(of: span1, using: span2) == true)
+        #expect(solution.enforceArcConsistency(of: span1, using: span2) == true)
 
         // span2's domain is ["CAT", "DOG", "OWL"]. It overlaps with
         // span1 at the letter 'O'. So, the reduced domain for span1
