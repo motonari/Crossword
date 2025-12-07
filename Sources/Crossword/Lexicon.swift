@@ -1082,7 +1082,7 @@ public struct Lexicon {
         ("ENCYCLOPEDIA", "Fact book."),
         ("IMMEDIATE", "Right now."),
         ("STRENGTHEN", "To make something stronger."),
-        ("NOTICEABLE", "See easy."),
+        ("NOTICEABLE", "Easy to spot."),
         ("OPERATIONAL", "Works good."),
         ("ACKNOWLEDGEMENT", "Say thanks."),
         ("DESPERATELY", "Need bad."),
