@@ -134,56 +134,7 @@ extension Solver {
 
 /// Backtracking
 extension Solver {
-    func solveInternal(
-        solution: Solution, stop: inout Bool,
-        solutionReporter: (Solution, inout Bool) -> Void
-    ) {
-        guard visitedSolutions.firstVisit(solution) else {
-            return
-        }
-
-        if solution.complete {
-            solutionReporter(solution, &stop)
-            if stop {
-                return
-            }
-        }
-
-        for span in solution.unsolvedSpans {
-            if stop {
-                return
-            }
-
-            let candidates = solution.domain(for: span)
-            if candidates.count == 1 {
-                continue
-            }
-
-            for value in candidates {
-                if stop {
-                    return
-                }
-
-                var newSolution = solution
-
-                newSolution.assign(word: value, to: span)
-                if !enforceGlobalConsistency(solution: &newSolution, span: span) {
-                    continue
-                }
-
-                if !enforceArcConsistency(solution: &newSolution, span: span) {
-                    continue
-                }
-
-                if !newSolution.solvable {
-                    continue
-                }
-
-                solveInternal(
-                    solution: newSolution, stop: &stop, solutionReporter: solutionReporter)
-            }
-        }
-    }
+    /// Solve the crossword.
 
     public func solve() -> [Solution] {
         guard
@@ -205,13 +156,80 @@ extension Solver {
 
         var solutions = [Solution]()
         var stop = false
-        solveInternal(solution: solution, stop: &stop) { solution, stop in
+        solveInternal(consistentSolution: solution, stop: &stop) { solution, stop in
             solutions.append(solution)
             stop = (solutions.count > 0)
         }
 
         return solutions
     }
+
+    private func solveInternalByAssigningValue(
+        to span: Span,
+        consistentSolution solution: Solution,
+        stop: inout Bool,
+        solutionReporter: (Solution, inout Bool) -> Void
+    ) {
+        let candidates = solution.domain(for: span)
+        guard candidates.count > 1 else {
+            return
+        }
+
+        for value in candidates {
+            var newSolution = solution
+
+            newSolution.assign(word: value, to: span)
+            if !enforceGlobalConsistency(solution: &newSolution, span: span) {
+                continue
+            }
+
+            if !enforceArcConsistency(solution: &newSolution, span: span) {
+                continue
+            }
+
+            if !newSolution.solvable {
+                continue
+            }
+
+            solveInternal(
+                consistentSolution: newSolution,
+                stop: &stop,
+                solutionReporter: solutionReporter)
+            if stop {
+                return
+            }
+        }
+
+    }
+
+    private func solveInternal(
+        consistentSolution solution: Solution,
+        stop: inout Bool,
+        solutionReporter: (Solution, inout Bool) -> Void
+    ) {
+        // Optimization by memorization. If we have seen this solution
+        // before, we don't have to process it again.
+        guard visitedSolutions.firstVisit(solution) else {
+            return
+        }
+
+        if solution.complete {
+            // Solution is completed; report it!
+            solutionReporter(solution, &stop)
+            if stop {
+                return
+            }
+        }
+
+        for span in solution.unsolvedSpans {
+            solveInternalByAssigningValue(
+                to: span,
+                consistentSolution: solution,
+                stop: &stop,
+                solutionReporter: solutionReporter)
+        }
+    }
+
 }
 
 private class VisitedSolutions {

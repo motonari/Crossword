@@ -83,8 +83,8 @@ extension HTMLSolutionRenderer: SolutionRenderer {
 
                     .grid {
                         display: grid;
-                        grid-template-columns: repeat(%d, 35px);
-                        grid-template-rows: repeat(%d, 35px);
+                        grid-template-columns: repeat(%d, 32px);
+                        grid-template-rows: repeat(%d, 32px);
                         gap: 1px;
                         background: #C30F16;
                         border-radius: 3px;
@@ -96,16 +96,14 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     }
 
                     .cell {
-                        width: 35px;
-                        height: 35px;
+                        width: 32px;
+                        height: 32px;
                         background: white;
                         border-radius: 3px;
                         display: flex;
                         flex-direction: column;
                         align-items: flex-start;
                         justify-content: flex-start;
-                        font-size: 14pt;
-                        font-weight: bold;
                         color: #1e90ff;
                         position: relative;
                     }
