@@ -39,7 +39,7 @@ import Testing
         let layout = Layout(grid: grid, blackCells: [(1, 0), (2, 0), (1, 2), (2, 2)])
         let crossword = Crossword(grid: grid, with: layout)
         let wordList = ["CAT", "DOG", "OWL"].map(Word.init)
-        var solver = Solver(for: crossword, lexicon: wordList)
+        let solver = Solver(for: crossword, lexicon: wordList)
 
         let solutions = solver.solve()
 
@@ -47,7 +47,7 @@ import Testing
         let solution = try #require(solutions.first)
 
         #expect(
-            solution.stringRepresentation == """
+            solution.gridRepresentation == """
                 D##
                 OWL
                 G##

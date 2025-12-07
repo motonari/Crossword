@@ -7,12 +7,16 @@ struct Domain {
 
 /// Initializers
 extension Domain {
-    init(for span: Span, using wordList: [Word]) {
+    init?(for span: Span, using wordList: [Word]) {
         for word in wordList {
             guard word.count == span.length else {
                 continue
             }
             values.append(word)
+        }
+
+        if values.isEmpty {
+            return nil
         }
     }
 }

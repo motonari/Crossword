@@ -24,7 +24,7 @@ public struct Solver {
         while let spanPair = workQueue.popFirst() {
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
-            if solution.reduceArc(of: targetSpan, using: referenceSpan) {
+            if solution.reduceDomain(of: targetSpan, using: referenceSpan) {
                 if solution.domain(for: targetSpan).isEmpty {
                     success = false
                     break
@@ -64,7 +64,7 @@ public struct Solver {
             let word = domain[0]
             // referenceSpan has been reduced to single value domain
             // and the word should be removed from other domains.
-            solution.update(except: referenceSpan, remove: word)
+            solution.remove(word: word, fromAllSpanExcept: referenceSpan)
         }
 
         return solution.solvable
@@ -101,8 +101,8 @@ public struct Solver {
                 }
 
                 var newSolution = solution
-                newSolution.update(span: span, values: [value])
-                newSolution.update(except: span, remove: value)
+
+                newSolution.assign(word: value, to: span)
                 if !newSolution.solvable {
                     continue
                 }

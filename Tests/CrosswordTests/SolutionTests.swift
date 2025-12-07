@@ -19,6 +19,40 @@ import Testing
         }
     }
 
+    @Test func initWithMustWord() throws {
+        // :::
+        // ###
+        // :::
+        let grid = Grid(width: 3, height: 3)
+        let layout = Layout(
+            grid: grid,
+            blackCells: [
+                (0, 1),
+                (1, 1),
+                (2, 1),
+            ])
+
+        let crossword = Crossword(grid: grid, with: layout)
+        let wordList = ["CAT", "DOG"]
+        let solution = try #require(
+            Solution(crossword: crossword, lexicon: wordList, mustWords: ["RAT"]))
+
+        let spans = crossword.spans
+        try #require(spans.count == 2)
+
+        // There are two valid solutions.
+        // 1. spans[0] = ["RAT"], spans[1] = ["CAT", "DOG"]
+        // 2. spans[0] = ["CAT", "DOG"], spans[1] = ["RAT"]
+        let case1 =
+            solution.domain(for: spans[0]).stringArrayRepresentation == ["RAT"]
+            && solution.domain(for: spans[1]).stringArrayRepresentation == ["CAT", "DOG"]
+        let case2 =
+            solution.domain(for: spans[1]).stringArrayRepresentation == ["RAT"]
+            && solution.domain(for: spans[0]).stringArrayRepresentation == ["CAT", "DOG"]
+
+        #expect((case1 && !case2) || (!case1 && case2))
+    }
+
     @Test func nodeInconsistency() throws {
         let grid = Grid(width: 4, height: 1)
         let crossword = Crossword(grid: grid)
@@ -43,7 +77,7 @@ import Testing
         let wordList = ["CAT", "DOG", "OWL"]
         var solution = try #require(Solution(crossword: crossword, lexicon: wordList))
 
-        #expect(solution.reduceArc(of: span1, using: span2) == true)
+        #expect(solution.reduceDomain(of: span1, using: span2) == true)
 
         // span2's domain is ["CAT", "DOG", "OWL"]. It overlaps with
         // span1 at the letter 'O'. So, the reduced domain for span1

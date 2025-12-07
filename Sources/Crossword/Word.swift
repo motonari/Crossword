@@ -1,5 +1,5 @@
 /// A word
-public struct Word: Sendable {
+public struct Word: Sendable, Equatable, Hashable {
     private let characters: [Character]
 }
 
@@ -8,10 +8,6 @@ extension Word {
     public init(_ s: String) {
         self.characters = [Character](s)
     }
-}
-
-/// Equatable
-extension Word: Equatable {
 }
 
 /// Collection
