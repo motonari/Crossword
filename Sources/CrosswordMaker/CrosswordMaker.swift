@@ -7,15 +7,18 @@ struct CrosswordMaker: ParsableCommand {
     @Flag(name: .short, help: "Generate layout file.")
     var generateLayoutFile = false
 
+    @Option(name: .customLong("max-layout-count"))
+    var maxLayoutCount: Int = 10_000_000
+
     @Option(
         name: [.customShort("m"), .customLong("mandatory-words")],
         help: "List of words the puzzle must have.",
         transform: { Word($0.uppercased()) }
     )
-    var mandatoryWords: [Word]
+    var mandatoryWords = [Word]()
 
     @Option(name: .shortAndLong, help: "The output file.")
-    var outputFileName: String
+    var outputFileName = "output.html"
 
     @Option(name: .shortAndLong, help: "How many words in the puzzle?")
     var count = 12
@@ -62,7 +65,8 @@ struct CrosswordMaker: ParsableCommand {
         let grid = Grid(width: width, height: height)
 
         if generateLayoutFile {
-            let fileURL = try LayoutStore.generateLayoutFile(grid: grid, wordCount: count)
+            let fileURL = try LayoutStore.generateLayoutFile(
+                grid: grid, wordCount: count, maxLayoutCount: maxLayoutCount)
             print("Layout file was created at: \(fileURL.path)")
             return
         }

@@ -118,7 +118,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     .cell .number {
                         position: absolute;
                         top: 2px;
-                        left: 3px;
+                        left: 6px;
                         font-size: 9pt;
                         font-weight: bold;
                         color: #0d47a1;
@@ -222,7 +222,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     </div>
 
                     <div class="acknowledgement">
-                    Any thoughts or suggestions? Shoot me an email at <address>Email: <a href="mailto:motonari.ito@gmail.com">motonari.ito@gmail.com</a></address> 
+                    Made by Kyosuke and Moto, his dad. Thoughts or suggestions? Send me an email! <address>Email: <a href="mailto:motonari.ito@gmail.com">motonari.ito@gmail.com</a></address> 
                     </div>
 
                     <script>
@@ -343,7 +343,12 @@ extension HTMLSolutionRenderer: SolutionRenderer {
             }
 
             let word = solution.domain(for: span).first!
-            let clue = lexicon.clue(for: word) ?? "Your name?"
+            let clue =
+                if word == Word("KYOSUKE") {
+                    "Birthday boy's name? 🎉"
+                } else {
+                    lexicon.clue(for: word) ?? "Your name? 😁"
+                }
             let clueID = clueIDs[location]!
             result.append("<div class=\"clue\">\(clueID). \(clue)</div>")
         }
