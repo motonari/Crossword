@@ -55,6 +55,7 @@ extension Domain {
 /// Mutating
 extension Domain {
     mutating func update(to newValues: [Word]) {
+        precondition(values.count > 0)
         values = newValues
     }
 

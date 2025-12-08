@@ -31,24 +31,9 @@ extension Solver {
     ///  - solution: The solution to update.
     ///
     /// - Returns:
-    ///  True if the solution is solvable, otherwise false.
+    ///  True if the domain has been modified.
     func enforceArcConsistency(solution: inout Solution) -> Bool {
         var workQueue = Deque(crossword.overlaps.keys)
-        return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
-    }
-
-    /// Reduce domains of spans that depend on a specified span.
-    ///
-    /// - Parameters:
-    ///  - solution: The solution to update.
-    ///  - span: The span which was updated. Any span that intersects
-    ///  with this span will be updated according to arc-consistency.
-    ///
-    /// - Returns:
-    ///  True if the solution is solvable, otherwise false.
-    func enforceArcConsistency(solution: inout Solution, span: Span) -> Bool {
-        let workItems = crossword.spansIntersecting(with: span).map { SpanPair($0, span) }
-        var workQueue = Deque(workItems)
         return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
     }
 
@@ -57,14 +42,14 @@ extension Solver {
         workQueue: inout Deque<SpanPair>
     ) -> Bool {
         // AC-3 algorithm.
-        var success = true
+        var changed = false
         while let spanPair = workQueue.popFirst() {
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
             if solution.enforceArcConsistency(of: targetSpan, using: referenceSpan) {
+                changed = true
                 let newDomain = solution.domain(for: targetSpan)
                 if newDomain.isEmpty {
-                    success = false
                     break
                 } else {
                     for affectedSpan in crossword.spansIntersecting(with: targetSpan) {
@@ -74,7 +59,7 @@ extension Solver {
             }
         }
 
-        return success
+        return changed
     }
 
 }
@@ -85,6 +70,12 @@ extension Solver {
     /// multiple times.
     ///
     /// This function made the whole solution globally consistent.
+    ///
+    /// - Parameters:
+    ///  - solution: The solution to update.
+    ///
+    /// - Returns:
+    ///  True if the domain has been modified.
     func enforceGlobalConsistency(solution: inout Solution) -> Bool {
         var workQueue = Deque<SpanPair>()
 
@@ -93,16 +84,6 @@ extension Solver {
             workQueue.append(contentsOf: newWorkItems)
         }
 
-        return enforceGlobalConsistencyInternal(solution: &solution, workQueue: &workQueue)
-    }
-    /// Enforce the rule: Crossword puzzle cannot use a same word
-    /// multiple times.
-    ///
-    /// This function made dependent spans globally consistent, given
-    /// the span that has been assigned a single value.
-    func enforceGlobalConsistency(solution: inout Solution, span referenceSpan: Span) -> Bool {
-        let newWorkItems = globalConsistencyWorkItems(of: solution, for: referenceSpan)
-        var workQueue = Deque<SpanPair>(newWorkItems)
         return enforceGlobalConsistencyInternal(solution: &solution, workQueue: &workQueue)
     }
 
@@ -118,7 +99,6 @@ extension Solver {
 
         for targetSpan in crossword.spans {
             guard referenceSpan != targetSpan else { continue }
-            guard solution.domain(for: targetSpan).count > 1 else { continue }
             workItems.append(SpanPair(targetSpan, referenceSpan))
         }
         return workItems
@@ -128,7 +108,7 @@ extension Solver {
         solution: inout Solution,
         workQueue: inout Deque<SpanPair>
     ) -> Bool {
-        var success = true
+        var anyDomainChanged = false
         while let spanPair = workQueue.popFirst() {
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
@@ -139,18 +119,18 @@ extension Solver {
             }
 
             let changed = solution.remove(word: referenceDomain[0], from: targetSpan)
-            let newTargetDomain = solution.domain(for: targetSpan)
-            if newTargetDomain.isEmpty {
-                success = false
-                break
-            }
-
             if changed {
+                anyDomainChanged = true
                 let newWorkItems = globalConsistencyWorkItems(of: solution, for: targetSpan)
                 workQueue.append(contentsOf: newWorkItems)
             }
+
+            let newTargetDomain = solution.domain(for: targetSpan)
+            if newTargetDomain.isEmpty {
+                break
+            }
         }
-        return success
+        return anyDomainChanged
     }
 }
 
@@ -167,11 +147,8 @@ extension Solver {
             return
         }
 
-        guard enforceGlobalConsistency(solution: &solution) else {
-            return
-        }
-
-        guard enforceArcConsistency(solution: &solution) else {
+        enforceConsistency(solution: &solution)
+        if !solution.solvable {
             return
         }
 
@@ -180,6 +157,20 @@ extension Solver {
             consistentSolution: solution,
             stop: &stop,
             solutionReporter: solutionReporter)
+    }
+
+    private func enforceConsistency(solution: inout Solution) {
+        var changed = true
+        while changed && solution.solvable {
+            changed = false
+            if enforceGlobalConsistency(solution: &solution) {
+                changed = true
+            }
+
+            if enforceArcConsistency(solution: &solution) {
+                changed = true
+            }
+        }
     }
 
     private func solveInternalByAssigningValue(
@@ -197,14 +188,7 @@ extension Solver {
             var newSolution = solution
 
             newSolution.assign(word: value, to: span)
-            if !enforceGlobalConsistency(solution: &newSolution, span: span) {
-                continue
-            }
-
-            if !enforceArcConsistency(solution: &newSolution, span: span) {
-                continue
-            }
-
+            enforceConsistency(solution: &newSolution)
             if !newSolution.solvable {
                 continue
             }
@@ -245,6 +229,9 @@ extension Solver {
                 consistentSolution: solution,
                 stop: &stop,
                 solutionReporter: solutionReporter)
+            if stop {
+                return
+            }
         }
     }
 
