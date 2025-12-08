@@ -17,8 +17,10 @@ extension Solver {
     ///  - lexicon: Set of words that the crossword can use.
     ///  - mustWord: Set of words that the crossword must use.
     public init(for crossword: Crossword, lexicon: [Word], mustWords: [Word] = []) {
+        let seed = UInt64(abs(mustWords.reduce(1) { $0 ^ $1.hashValue }))
+        var rng = SplitMix64(seed: seed)
         self.crossword = crossword
-        self.lexicon = lexicon
+        self.lexicon = lexicon.shuffled(using: &rng)
         self.mustWords = mustWords
     }
 }
