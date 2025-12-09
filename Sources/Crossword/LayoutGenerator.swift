@@ -1,4 +1,6 @@
-/// Generates layouts.
+/// The layout generator.
+///
+/// It is a Sequence that generates a series of layout.
 struct LayoutGenerator {
     /// Size of the crossword puzzle
     let grid: Grid

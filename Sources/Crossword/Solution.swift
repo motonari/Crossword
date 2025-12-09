@@ -1,14 +1,20 @@
 import CryptoKit
 
-/// Set of CSP variables and their domains.
+// MARK: Structure
+/// Set of CSP variables and their domains, which are possible values
+/// for the variable.
 ///
-/// Solution is complete if all the domains have one and only one possible value.
+/// Solution is complete if all the domains have one and only one
+/// possible value.
 public struct Solution {
+    /// The crossword puzzle the solution is for.
     let crossword: Crossword
-    var domains: [Span: Domain]
+
+    /// Dictionary of span and its domain.
+    private var domains: [Span: Domain]
 }
 
-// Initializers
+// MARK: Initializers
 extension Solution {
     /// Creates CSP variables.
     ///
@@ -100,7 +106,7 @@ extension Solution {
     }
 }
 
-// CSP algorithms
+// MARK: CSP algorithms
 extension Solution {
     /// Reduce domain of `targetSpan` based on the domain of `referenceSpan`.
     ///
@@ -154,7 +160,7 @@ extension Solution {
     }
 }
 
-// Status
+// MARK: Status
 extension Solution {
     /// The solution is complete.
     ///
@@ -190,15 +196,29 @@ extension Solution {
         }
     }
 
-    /// Utility to avoid force-unwraping.
+    /// Domain of a specified span.
     ///
     /// We knew `domains` dictionary has all the spans anyway.
     func domain(for span: Span) -> Domain {
         domains[span]!
     }
+
 }
 
-// mutating functions
+// MARK: Digestable
+extension Solution: Digestable {
+    /// SHA256 hash for memorization in the dynamic programming
+    /// optimization in DFS.
+    var digest: SHA256.Digest {
+        var hasher = SHA256()
+        for span in crossword.spans {
+            domains[span]!.hash(into: &hasher)
+        }
+        return hasher.finalize()
+    }
+}
+
+// MARK: Mutating domains
 extension Solution {
     mutating func assign(words: [Word], to span: Span) {
         domains[span]!.update(to: words)
@@ -213,19 +233,9 @@ extension Solution {
     }
 }
 
-extension Solution {
-    /// SHA256 hash for memorization in the dynamic programming
-    /// optimization in DFS.
-    var digest: SHA256.Digest {
-        var hasher = SHA256()
-        for span in crossword.spans {
-            domains[span]!.hash(into: &hasher)
-        }
-        return hasher.finalize()
-    }
-}
-
+// MARK: String Representation
 extension Solution: CustomStringConvertible, CustomDebugStringConvertible {
+    /// Implementation of CustomStringConvertible
     public var description: String {
         let count = domains.count
         let singleDomainCount = domains.count { (_, domain) in domain.count == 1 }
@@ -234,6 +244,7 @@ extension Solution: CustomStringConvertible, CustomDebugStringConvertible {
             "DomainMap(total = \(count), solved = \(singleDomainCount), failed = \(zeroDomainCount)"
     }
 
+    /// Implementation of CustomDebugStringConvertible
     public var debugDescription: String {
         var result = ""
         for (span, domain) in domains {
@@ -242,7 +253,10 @@ extension Solution: CustomStringConvertible, CustomDebugStringConvertible {
         return result
     }
 
-    var gridRepresentation: String {
+    /// Grid representation of the solution.
+    ///
+    /// Use this property to examine the solution for debugging.
+    public var gridRepresentation: String {
         let charRow = [Character](repeating: "#", count: crossword.grid.width)
         var charGrid = [[Character]](repeating: charRow, count: crossword.grid.height)
 

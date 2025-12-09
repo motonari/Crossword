@@ -1,14 +1,19 @@
 import Collections
 import CryptoKit
 
+// MARK: Struct
+
+/// Crossword CSP Solver
+///
+///
 public struct Solver {
     private let crossword: Crossword
     private let lexicon: [Word]
     private let mustWords: [Word]
-    private let visitedSolutions = VisitedSolutions()
+    private let visitLog = SearchLog<Solution>()
 }
 
-/// Initializers
+// MARK: Initializers
 extension Solver {
     /// Creates a solver.
     ///
@@ -25,7 +30,109 @@ extension Solver {
     }
 }
 
-/// Arc-Consistency
+// MARK: Backtracking Solver
+extension Solver {
+    /// Solve the crossword.
+    public func solve(solutionReporter: (Solution, inout Bool) throws -> Void) throws {
+        guard
+            var solution = Solution(
+                crossword: crossword,
+                lexicon: lexicon,
+                mustWords: mustWords)
+        else {
+            return
+        }
+
+        enforceConsistency(solution: &solution)
+        if !solution.solvable {
+            return
+        }
+
+        var stop = false
+        try solveInternal(
+            consistentSolution: solution,
+            stop: &stop,
+            solutionReporter: solutionReporter)
+    }
+
+    private func enforceConsistency(solution: inout Solution) {
+        var changed = true
+        while changed && solution.solvable {
+            changed = false
+            if enforceGlobalConsistency(solution: &solution) {
+                changed = true
+            }
+
+            if enforceArcConsistency(solution: &solution) {
+                changed = true
+            }
+        }
+    }
+
+    private func assignValue(
+        to span: Span,
+        consistentSolution solution: Solution,
+        stop: inout Bool,
+        solutionReporter: (Solution, inout Bool) throws -> Void
+    ) throws {
+        let candidates = solution.domain(for: span)
+        guard candidates.count > 1 else {
+            return
+        }
+
+        for value in candidates {
+            var newSolution = solution
+
+            newSolution.assign(word: value, to: span)
+            enforceConsistency(solution: &newSolution)
+            if !newSolution.solvable {
+                continue
+            }
+
+            try solveInternal(
+                consistentSolution: newSolution,
+                stop: &stop,
+                solutionReporter: solutionReporter)
+            if stop {
+                return
+            }
+        }
+
+    }
+
+    private func solveInternal(
+        consistentSolution solution: Solution,
+        stop: inout Bool,
+        solutionReporter: (Solution, inout Bool) throws -> Void
+    ) throws {
+        // Optimization by memorization. If we have seen this solution
+        // before, we don't have to process it again.
+        guard visitLog.firstVisit(solution) else {
+            return
+        }
+
+        if solution.complete {
+            // Solution is completed; report it!
+            try solutionReporter(solution, &stop)
+            if stop {
+                return
+            }
+        }
+
+        for span in solution.unsolvedSpans {
+            try assignValue(
+                to: span,
+                consistentSolution: solution,
+                stop: &stop,
+                solutionReporter: solutionReporter)
+            if stop {
+                return
+            }
+        }
+    }
+}
+
+// MARK: Arc-Consistency
 extension Solver {
     /// Reduce all the domains per arc-consistency.
     ///
@@ -66,7 +173,7 @@ extension Solver {
 
 }
 
-/// Global-Consistency
+// MARK: Global-Consistency
 extension Solver {
     /// Enforce the rule that Crossword puzzle cannot use a same word
     /// multiple times.
@@ -133,117 +240,5 @@ extension Solver {
             }
         }
         return anyDomainChanged
-    }
-}
-
-/// Backtracking
-extension Solver {
-    /// Solve the crossword.
-    public func solve(solutionReporter: (Solution, inout Bool) throws -> Void) throws {
-        guard
-            var solution = Solution(
-                crossword: crossword,
-                lexicon: lexicon,
-                mustWords: mustWords)
-        else {
-            return
-        }
-
-        enforceConsistency(solution: &solution)
-        if !solution.solvable {
-            return
-        }
-
-        var stop = false
-        try solveInternal(
-            consistentSolution: solution,
-            stop: &stop,
-            solutionReporter: solutionReporter)
-    }
-
-    private func enforceConsistency(solution: inout Solution) {
-        var changed = true
-        while changed && solution.solvable {
-            changed = false
-            if enforceGlobalConsistency(solution: &solution) {
-                changed = true
-            }
-
-            if enforceArcConsistency(solution: &solution) {
-                changed = true
-            }
-        }
-    }
-
-    private func solveInternalByAssigningValue(
-        to span: Span,
-        consistentSolution solution: Solution,
-        stop: inout Bool,
-        solutionReporter: (Solution, inout Bool) throws -> Void
-    ) throws {
-        let candidates = solution.domain(for: span)
-        guard candidates.count > 1 else {
-            return
-        }
-
-        for value in candidates {
-            var newSolution = solution
-
-            newSolution.assign(word: value, to: span)
-            enforceConsistency(solution: &newSolution)
-            if !newSolution.solvable {
-                continue
-            }
-
-            try solveInternal(
-                consistentSolution: newSolution,
-                stop: &stop,
-                solutionReporter: solutionReporter)
-            if stop {
-                return
-            }
-        }
-
-    }
-
-    private func solveInternal(
-        consistentSolution solution: Solution,
-        stop: inout Bool,
-        solutionReporter: (Solution, inout Bool) throws -> Void
-    ) throws {
-        // Optimization by memorization. If we have seen this solution
-        // before, we don't have to process it again.
-        guard visitedSolutions.firstVisit(solution) else {
-            return
-        }
-
-        if solution.complete {
-            // Solution is completed; report it!
-            try solutionReporter(solution, &stop)
-            if stop {
-                return
-            }
-        }
-
-        for span in solution.unsolvedSpans {
-            try solveInternalByAssigningValue(
-                to: span,
-                consistentSolution: solution,
-                stop: &stop,
-                solutionReporter: solutionReporter)
-            if stop {
-                return
-            }
-        }
-    }
-
-}
-
-private class VisitedSolutions {
-    var visitedSet = Set<SHA256Digest>()
-    func firstVisit(_ solution: Solution) -> Bool {
-        let digest = solution.digest
-        let (inserted, _) = visitedSet.insert(digest)
-        return inserted
     }
 }
