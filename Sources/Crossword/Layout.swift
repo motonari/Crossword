@@ -2,7 +2,7 @@ import Foundation
 
 /// Locations of black cells in the grid.
 public struct Layout: Sendable {
-    private var storage: Data
+    private var storage: [UInt8]
 }
 
 /// In-memory initializers.
@@ -10,7 +10,7 @@ extension Layout {
     /// Creates a layout with all white cells.
     init(grid: Grid) {
         let storageSize = Self.storageSize(for: grid)
-        self.storage = Data(count: storageSize)
+        self.storage = [UInt8](repeating: 0, count: storageSize)
     }
 
     /// Creates a layout with specified black cells.
@@ -59,7 +59,7 @@ extension Layout {
         else {
             return nil
         }
-        self.storage = storage
+        self.storage = Array(storage)
     }
 }
 
@@ -185,7 +185,7 @@ extension Layout {
 extension Layout {
     /// Layout as Data.
     var dataRepresentation: Data {
-        storage
+        Data(storage)
     }
 
     /// List of black cell locations.
