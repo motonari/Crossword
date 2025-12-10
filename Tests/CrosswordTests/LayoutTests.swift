@@ -61,7 +61,7 @@ import Testing
         return temporaryFileURL
     }
 
-    @Test func initFromFile() throws {
+    @Test func initFromFile() async throws {
         // ::::
         // #:#:
         // :#:#
@@ -73,10 +73,9 @@ import Testing
 
         let data = Data([0x0A, 0x50])
         try data.write(to: temporaryFileURL)
-        let fileHandle = try FileHandle(forReadingFrom: temporaryFileURL)
-
         let grid = Grid(width: 4, height: 4)
-        let layout = try #require(try Layout(fileHandle: fileHandle, grid: grid))
+        let fileHandle = try FileHandle(forReadingFrom: temporaryFileURL)
+        let layout = try #require(try Layout(readingFrom: fileHandle, grid: grid))
 
         #expect(
             layout.blackCells(in: grid) == [

@@ -1,4 +1,4 @@
-public struct Grid {
+public struct Grid: Equatable, Sendable {
     let width: Int
     let height: Int
 

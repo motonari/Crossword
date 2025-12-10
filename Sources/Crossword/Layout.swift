@@ -1,7 +1,7 @@
 import Foundation
 
 /// Locations of black cells in the grid.
-public struct Layout {
+public struct Layout: Sendable {
     private var storage: Data
 }
 
@@ -51,16 +51,14 @@ extension Layout {
     /// - Parameters:
     ///  - fileHandle: The file handle from which the object will be created.
     ///  - grid: The size of the crossword.
-    init?(fileHandle: FileHandle, grid: Grid) throws {
+    init?(readingFrom fileHandle: FileHandle, grid: Grid) throws {
         let bytesPerLayout = Self.storageSize(for: grid)
-        guard let storage = try fileHandle.read(upToCount: bytesPerLayout) else {
+        guard
+            let storage = try fileHandle.read(upToCount: bytesPerLayout),
+            storage.count == bytesPerLayout
+        else {
             return nil
         }
-
-        if storage.count != bytesPerLayout {
-            return nil
-        }
-
         self.storage = storage
     }
 }

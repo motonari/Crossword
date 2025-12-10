@@ -3,7 +3,7 @@ import Crossword
 import Foundation
 
 @main
-struct CrosswordMaker: ParsableCommand {
+struct CrosswordMaker: AsyncParsableCommand {
     @Flag(name: .short, help: "Generate layout file.")
     var generateLayoutFile = false
 
@@ -20,6 +20,9 @@ struct CrosswordMaker: ParsableCommand {
     @Option(name: .shortAndLong, help: "The output file.")
     var outputFileName = "output.html"
 
+    @Option(name: .long, help: "The layout data file.")
+    var layoutFileName: String?
+
     @Option(name: .shortAndLong, help: "How many words in the puzzle?")
     var count = 12
 
@@ -34,15 +37,18 @@ struct CrosswordMaker: ParsableCommand {
         wordCount: Int,
         lexicon: [Word],
         mustWords: [Word]
-    ) throws {
-        let layoutStore = try LayoutStore(grid: grid, wordCount: wordCount)
+    ) async throws {
+        let defaultLayoutFileURL = LayoutFile.defaultLayoutFileURL(
+            grid: grid, wordCount: wordCount)
+
+        let layoutStore = try await LayoutFile(contentsOf: defaultLayoutFileURL)
         var progressCount = 0
         var intersectionCount = 0
-        for blackCellLayout in layoutStore {
+        for blackCellLayout in layoutStore.layouts {
             progressCount += 1
             intersectionCount += blackCellLayout.intersectionCount(in: grid)
             if progressCount % 1000 == 0 {
-                print("\(progressCount) / \(layoutStore.count)")
+                print("\(progressCount) / \(layoutStore.layouts.count)")
                 print("Score = \(intersectionCount / 1000)")
                 intersectionCount = 0
             }
@@ -66,22 +72,54 @@ struct CrosswordMaker: ParsableCommand {
         }
     }
 
-    mutating func run() throws {
+    func makeLayoutFile(
+        grid: Grid,
+        wordCount: Int,
+        maxLayoutCount: Int,
+        layoutFileURL: URL?
+    ) async throws {
+        let layoutFileURL =
+            layoutFileURL ?? LayoutFile.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
+
+        let factory = LayoutFactory(
+            grid: grid,
+            wordCount: wordCount,
+            maxLayoutCount: maxLayoutCount)
+
+        let layoutFile = try? await LayoutFile(contentsOf: layoutFileURL)
+        for await layoutFile in try factory.generate(basedOn: layoutFile) {
+            print(
+                "score: \(layoutFile.maxIntersectionCount) number of layouts: \(layoutFile.layouts.count)"
+            )
+
+            try await layoutFile.write(to: layoutFileURL)
+        }
+
+        print("Layout file was created at: \(layoutFileURL.path)")
+        return
+
+    }
+
+    mutating func run() async throws {
         let grid = Grid(width: width, height: height)
 
         if generateLayoutFile {
-            let fileURL = try LayoutStore.generateLayoutFile(
-                grid: grid, wordCount: count, maxLayoutCount: maxLayoutCount)
-            print("Layout file was created at: \(fileURL.path)")
-            return
-        }
+            var layoutFileURL: URL? = nil
+            if let layoutFileName {
+                layoutFileURL = URL(fileURLWithPath: layoutFileName)
+            }
+            try await makeLayoutFile(
+                grid: grid, wordCount: count, maxLayoutCount: maxLayoutCount,
+                layoutFileURL: layoutFileURL)
+        } else {
 
-        let lexicon = Lexicon().words
-        print("Solving with word count = \(count), mandatory words: \(mandatoryWords)")
-        try makeCrossword(
-            grid: grid,
-            wordCount: count,
-            lexicon: lexicon,
-            mustWords: mandatoryWords)
+            let lexicon = Lexicon().words
+            print("Solving with word count = \(count), mandatory words: \(mandatoryWords)")
+            try await makeCrossword(
+                grid: grid,
+                wordCount: count,
+                lexicon: lexicon,
+                mustWords: mandatoryWords)
+        }
     }
 }
