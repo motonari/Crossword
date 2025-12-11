@@ -186,7 +186,7 @@ extension Solver {
     /// - Returns:
     ///  True if the domain has been modified.
     func enforceGlobalConsistency(solution: inout Solution) -> Bool {
-        var workQueue = Deque<SpanPair>()
+        var workQueue = Deque<(Span, Word)>()
 
         for referenceSpan in crossword.spans {
             let newWorkItems = globalConsistencyWorkItems(of: solution, for: referenceSpan)
@@ -197,9 +197,9 @@ extension Solver {
     }
 
     private func globalConsistencyWorkItems(of solution: Solution, for referenceSpan: Span)
-        -> [SpanPair]
+        -> [(Span, Word)]
     {
-        var workItems = [SpanPair]()
+        var workItems = [(Span, Word)]()
 
         let referenceDomain = solution.domain(for: referenceSpan)
         guard referenceDomain.count == 1 else {
@@ -208,26 +208,20 @@ extension Solver {
 
         for targetSpan in crossword.spans {
             guard referenceSpan != targetSpan else { continue }
-            workItems.append(SpanPair(targetSpan, referenceSpan))
+            workItems.append((targetSpan, referenceDomain[0]))
         }
         return workItems
     }
 
     private func enforceGlobalConsistencyInternal(
         solution: inout Solution,
-        workQueue: inout Deque<SpanPair>
+        workQueue: inout Deque<(Span, Word)>
     ) -> Bool {
         var anyDomainChanged = false
-        while let spanPair = workQueue.popFirst() {
-            let targetSpan = spanPair.span1
-            let referenceSpan = spanPair.span2
+        while let spanAndWord = workQueue.popFirst() {
+            let (targetSpan, wordToRemove) = spanAndWord
 
-            let referenceDomain = solution.domain(for: referenceSpan)
-            guard referenceDomain.count == 1 else {
-                continue
-            }
-
-            let changed = solution.remove(word: referenceDomain[0], from: targetSpan)
+            let changed = solution.remove(word: wordToRemove, from: targetSpan)
             if changed {
                 anyDomainChanged = true
                 let newWorkItems = globalConsistencyWorkItems(of: solution, for: targetSpan)
