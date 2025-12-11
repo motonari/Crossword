@@ -36,24 +36,76 @@ extension Solver {
     /// Solve the crossword.
     public func solve(solutionReporter: (Solution, inout Bool) throws -> Void) throws {
         guard
-            var solution = Solution(
+            let solution = Solution(
                 crossword: crossword,
-                lexicon: lexicon,
-                mustWords: mustWords)
+                lexicon: lexicon)
         else {
             return
         }
 
-        enforceConsistency(solution: &solution)
-        if !solution.solvable {
+        try solveMustWords { mustWordsAssignment, stop in
+            var newSolution = solution
+            for (span, word) in mustWordsAssignment {
+                newSolution.assign(word: word, to: span)
+            }
+
+            enforceConsistency(solution: &newSolution)
+            if !newSolution.solvable {
+                return
+            }
+
+            try solveInternal(
+                consistentSolution: newSolution,
+                stop: &stop,
+                solutionReporter: solutionReporter)
+        }
+    }
+
+    private func solveMustWords(reporter: ([Span: Word], inout Bool) throws -> Void) throws {
+        var stop = false
+        try solveMustWordsInternal(
+            assignments: [Span: Word](),
+            stop: &stop,
+            reporter: reporter)
+    }
+
+    private func solveMustWordsInternal(
+        assignments: [Span: Word],
+        stop: inout Bool,
+        reporter: ([Span: Word], inout Bool) throws -> Void
+    ) throws {
+        if assignments.count == mustWords.count {
+            // complete.
+            try reporter(assignments, &stop)
             return
         }
 
-        var stop = false
-        try solveInternal(
-            consistentSolution: solution,
-            stop: &stop,
-            solutionReporter: solutionReporter)
+        for span in crossword.spans {
+            guard !assignments.keys.contains(span) else {
+                // This span has gotten one of the must words.
+                continue
+            }
+
+            for mustWord in mustWords {
+                guard !assignments.values.contains(mustWord) else {
+                    // This word has been assigned.
+                    continue
+                }
+
+                guard span.length == mustWord.count else {
+                    // Length differs; we cannot assign the word to this span.
+                    continue
+                }
+
+                var newAssignments = assignments
+                newAssignments[span] = mustWord
+                try solveMustWordsInternal(
+                    assignments: newAssignments, stop: &stop, reporter: reporter)
+                if stop {
+                    return
+                }
+            }
+        }
     }
 
     private func enforceConsistency(solution: inout Solution) {

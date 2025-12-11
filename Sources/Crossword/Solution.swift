@@ -24,12 +24,11 @@ extension Solution {
     ///  - mustWords: List of words that must be used in the puzzle. It does not have to be in the lexicon.
     init?(
         crossword: Crossword,
-        lexicon: [Word],
-        mustWords: [Word] = []
+        lexicon: [Word]
     ) {
         guard
             let domains = Self.makeSpanDomainDictionary(
-                crossword: crossword, lexicon: lexicon, mustWords: mustWords)
+                crossword: crossword, lexicon: lexicon)
         else {
             return nil
         }
@@ -48,13 +47,11 @@ extension Solution {
     ///  - mustWords: List of words that must be used in the puzzle. It does not have to be in the lexicon.
     init?(
         crossword: Crossword,
-        lexicon: [String],
-        mustWords: [String] = []
+        lexicon: [String]
     ) {
         self.init(
             crossword: crossword,
-            lexicon: lexicon.map(Word.init),
-            mustWords: mustWords.map(Word.init))
+            lexicon: lexicon.map(Word.init))
     }
 
     /// Make the initial span to domain dictionary.
@@ -65,8 +62,7 @@ extension Solution {
     ///  - mustWords: List of words that must be used in the puzzle. It does not have to be in the lexicon.
     private static func makeSpanDomainDictionary(
         crossword: Crossword,
-        lexicon: [Word],
-        mustWords: [Word]
+        lexicon: [Word]
     )
         -> [Span: Domain]?
     {
@@ -74,32 +70,14 @@ extension Solution {
         let spans = crossword.spans
         var domains = [Span: Domain](minimumCapacity: spans.count)
 
-        var unassignedMustWords = mustWords
         for span in spans {
-            // The default domain is a set of words in the lexicon.
-            var values = lexicon
-
-            // But if any must-word fits in the span, assign it here and call it a day.
-            if let eligibleMustWordIndex = unassignedMustWords.firstIndex(where: { mustWord in
-                mustWord.count == span.length
-            }) {
-                values = [unassignedMustWords[eligibleMustWordIndex]]
-                unassignedMustWords.remove(at: eligibleMustWordIndex)
-            }
-
-            // Then, make Domain object.
-            guard let domain = Domain(for: span, using: values) else {
+            guard let domain = Domain(for: span, using: lexicon) else {
                 // The span length did not match any of the words in
                 // lexicon.
                 return nil
             }
 
             domains[span] = domain
-        }
-
-        if !unassignedMustWords.isEmpty {
-            // Oops, some must-words were failed to get assigned.
-            return nil
         }
 
         return domains

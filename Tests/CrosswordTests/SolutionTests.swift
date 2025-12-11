@@ -19,40 +19,6 @@ import Testing
         }
     }
 
-    @Test func initWithMustWord() throws {
-        // :::
-        // ###
-        // :::
-        let grid = Grid(width: 3, height: 3)
-        let layout = Layout(
-            grid: grid,
-            blackCells: [
-                (0, 1),
-                (1, 1),
-                (2, 1),
-            ])
-
-        let crossword = Crossword(grid: grid, with: layout)
-        let wordList = ["CAT", "DOG"]
-        let solution = try #require(
-            Solution(crossword: crossword, lexicon: wordList, mustWords: ["RAT"]))
-
-        let spans = crossword.spans
-        try #require(spans.count == 2)
-
-        // There are two valid solutions.
-        // 1. spans[0] = ["RAT"], spans[1] = ["CAT", "DOG"]
-        // 2. spans[0] = ["CAT", "DOG"], spans[1] = ["RAT"]
-        let case1 =
-            solution.domain(for: spans[0]).stringArrayRepresentation == ["RAT"]
-            && solution.domain(for: spans[1]).stringArrayRepresentation == ["CAT", "DOG"]
-        let case2 =
-            solution.domain(for: spans[1]).stringArrayRepresentation == ["RAT"]
-            && solution.domain(for: spans[0]).stringArrayRepresentation == ["CAT", "DOG"]
-
-        #expect((case1 && !case2) || (!case1 && case2))
-    }
-
     @Test func nodeInconsistency() throws {
         let grid = Grid(width: 4, height: 1)
         let crossword = Crossword(grid: grid)
