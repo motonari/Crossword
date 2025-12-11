@@ -36,17 +36,18 @@ struct CrosswordMaker: AsyncParsableCommand {
         grid: Grid,
         wordCount: Int,
         lexicon: [Word],
-        mustWords: [Word]
+        mustWords: [Word],
+        layoutFileURL: URL?
     ) async throws {
-        let defaultLayoutFileURL = LayoutFile.defaultLayoutFileURL(
-            grid: grid, wordCount: wordCount)
+        let layoutFileURL =
+            layoutFileURL ?? LayoutFile.defaultLayoutFileURL(grid: grid, wordCount: wordCount)
 
-        let layoutFile = try await LayoutFile(contentsOf: defaultLayoutFileURL)
+        let layoutFile = try await LayoutFile(contentsOf: layoutFileURL)
         var progressCount = 0
         var intersectionCount = 0
-        for blackCellLayout in layoutFile.layouts {
+        for layout in layoutFile.layouts {
             progressCount += 1
-            intersectionCount += blackCellLayout.score.0
+            intersectionCount += layout.score.0
             if progressCount % 1000 == 0 {
                 print("\(progressCount) / \(layoutFile.layoutCount)")
                 print("Score = \(intersectionCount / 1000)")
@@ -54,7 +55,10 @@ struct CrosswordMaker: AsyncParsableCommand {
             }
 
             let grid = Grid(width: width, height: height)
-            let crossword = Crossword(grid: grid, with: blackCellLayout)
+            let crossword = Crossword(grid: grid, with: layout)
+
+            let testLayoutFileURL = URL(fileURLWithPath: "crossword_layout_test.data")
+            try await LayoutFile(layout: layout, wordCount: wordCount).write(to: testLayoutFileURL)
 
             let solver = Solver(for: crossword, lexicon: lexicon, mustWords: mustWords)
 
@@ -103,11 +107,12 @@ struct CrosswordMaker: AsyncParsableCommand {
     mutating func run() async throws {
         let grid = Grid(width: width, height: height)
 
+        var layoutFileURL: URL? = nil
+        if let layoutFileName {
+            layoutFileURL = URL(fileURLWithPath: layoutFileName)
+        }
+
         if generateLayoutFile {
-            var layoutFileURL: URL? = nil
-            if let layoutFileName {
-                layoutFileURL = URL(fileURLWithPath: layoutFileName)
-            }
             try await makeLayoutFile(
                 grid: grid, wordCount: count, maxLayoutCount: maxLayoutCount,
                 layoutFileURL: layoutFileURL)
@@ -119,7 +124,8 @@ struct CrosswordMaker: AsyncParsableCommand {
                 grid: grid,
                 wordCount: count,
                 lexicon: lexicon,
-                mustWords: mandatoryWords)
+                mustWords: mandatoryWords,
+                layoutFileURL: layoutFileURL)
         }
     }
 }

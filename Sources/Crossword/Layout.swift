@@ -3,8 +3,8 @@ import Synchronization
 
 /// Locations of black cells in the grid.
 public struct Layout: Sendable {
+    let grid: Grid
 
-    private let grid: Grid
     private var storage: [UInt8]
     private let scoreCache = ScoreCacheWrapper()
 }

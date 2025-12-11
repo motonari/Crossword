@@ -25,6 +25,13 @@ extension LayoutData {
         self.data = data
         self.offsets = offsets
     }
+
+    /// Make a single layout data for Debugging.
+    init(layout: Layout) {
+        self.grid = layout.grid
+        self.data = layout.dataRepresentation
+        self.offsets = [0]
+    }
 }
 
 // MARK: Insertion

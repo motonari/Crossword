@@ -32,6 +32,13 @@ extension LayoutFile {
         let layoutFile = try await LayoutFile.read(from: layoutFileURL)
         self = layoutFile
     }
+
+    /// Creates with a single layout for debugging purpose.
+    public init(layout: Layout, wordCount: Int) {
+        self.grid = layout.grid
+        self.wordCount = wordCount
+        self.layoutData = LayoutData(layout: layout)
+    }
 }
 
 // MARK: Layout Sequence
