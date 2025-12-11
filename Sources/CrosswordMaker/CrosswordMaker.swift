@@ -46,7 +46,7 @@ struct CrosswordMaker: AsyncParsableCommand {
         var intersectionCount = 0
         for blackCellLayout in layoutStore.layouts {
             progressCount += 1
-            intersectionCount += blackCellLayout.intersectionCount(in: grid)
+            intersectionCount += blackCellLayout.score.0
             if progressCount % 1000 == 0 {
                 print("\(progressCount) / \(layoutStore.layouts.count)")
                 print("Score = \(intersectionCount / 1000)")

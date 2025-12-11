@@ -7,15 +7,12 @@ public struct LayoutFactory {
     let grid: Grid
     let wordCount: Int
     let maxLayoutCount: Int
+
     public init(grid: Grid, wordCount: Int, maxLayoutCount: Int = 1_000_000) {
         self.grid = grid
         self.wordCount = wordCount
         self.maxLayoutCount = maxLayoutCount
     }
-}
-
-// MARK: Initializers
-extension LayoutFactory {
 }
 
 // MARK: Build layouts
@@ -31,13 +28,13 @@ extension LayoutFactory {
             }
         }
 
-        return AsyncStream<LayoutFile> { continuation in
+        return AsyncStream<LayoutFile>(bufferingPolicy: .bufferingOldest(2)) { continuation in
             let grid = self.grid
             let wordCount = self.wordCount
             let maxLayoutCount = self.maxLayoutCount
-            var updatedLayouts = [Layout]()
+            var updatedLayoutData = LayoutData(grid: grid)
             if let baseLayoutFile {
-                updatedLayouts = baseLayoutFile.layouts
+                updatedLayoutData = baseLayoutFile.layoutData
             }
 
             Task {
@@ -50,22 +47,20 @@ extension LayoutFactory {
                     if Task.isCancelled {
                         break
                     }
+                    updatedLayoutData.insert(layout, maxLayoutCount: maxLayoutCount)
 
-                    let score = layout.intersectionCount(in: grid)
-                    let insertingIndex = updatedLayouts.partitioningIndex {
-                        score >= $0.intersectionCount(in: grid)
-                    }
-
-                    updatedLayouts.insert(layout, at: insertingIndex)
-                    updatedLayouts = Array(updatedLayouts.prefix(maxLayoutCount))
                     counter += 1
                     if counter % 1000 == 0 {
                         let layoutFile = LayoutFile(
                             grid: grid,
                             wordCount: wordCount,
-                            layouts: updatedLayouts)
+                            layoutData: updatedLayoutData)
 
-                        continuation.yield(layoutFile)
+                        var result = continuation.yield(layoutFile)
+                        while case .dropped(let failedItem) = result {
+                            try await Task.sleep(for: .milliseconds(100))
+                            result = continuation.yield(consume failedItem)
+                        }
                     }
                 }
 

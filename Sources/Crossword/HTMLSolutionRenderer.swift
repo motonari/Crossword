@@ -309,7 +309,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
             var row = [String]()
             for x in 0..<grid.width {
                 let location = Location(x, y)
-                let color = layout.cell(at: location, in: grid)
+                let color = layout.cell(at: location)
 
                 switch color {
                 case .white:

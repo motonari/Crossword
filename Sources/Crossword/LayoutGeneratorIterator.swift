@@ -59,7 +59,7 @@ extension LayoutGeneratorIterator: IteratorProtocol {
     }
 
     private func blackCells(spans: SpanSet) -> Layout {
-        var blackCellLayout = Layout(grid: grid)
+        var blackCells = [Location]()
         for location in Locations(grid: grid) {
             let useBlackCell = spans.allSatisfy { span in
                 let (xRange, yRange) = span.range
@@ -67,10 +67,10 @@ extension LayoutGeneratorIterator: IteratorProtocol {
             }
 
             if useBlackCell {
-                blackCellLayout.update(to: .black, at: location, in: grid)
+                blackCells.append(location)
             }
         }
-        return blackCellLayout
+        return Layout(grid: grid, blackCells: blackCells)
     }
 }
 

@@ -78,31 +78,11 @@ import Testing
         let layout = try #require(try Layout(readingFrom: fileHandle, grid: grid))
 
         #expect(
-            layout.blackCells(in: grid) == [
+            layout.blackCells() == [
                 Location(0, 1),
                 Location(2, 1),
                 Location(1, 2),
                 Location(3, 2),
             ])
     }
-
-    @Test func updateCellToBlack() throws {
-        let grid = Grid(width: 4, height: 4)
-        var layout = Layout(grid: grid)  // all white
-
-        layout.update(to: .black, at: Location(2, 2), in: grid)
-
-        #expect(layout.blackCells(in: grid) == [Location(2, 2)])
-    }
-
-    @Test func updateCellToWhite() throws {
-        let grid = Grid(width: 1, height: 1)
-        var layout = Layout(grid: grid, blackCells: [(0, 0)])  // black
-        try #require(layout.blackCells(in: grid) == [Location(0, 0)])
-
-        layout.update(to: .white, at: Location(0, 0), in: grid)
-
-        #expect(layout.blackCells(in: grid) == [])
-    }
-
 }

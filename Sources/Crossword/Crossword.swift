@@ -14,7 +14,7 @@ public struct Crossword {
 
         var length = 0
         var location = start
-        while grid.contains(location) && layout.cell(at: location, in: grid) == .white {
+        while grid.contains(location) && layout.cell(at: location) == .white {
             location += direction.delta
             length += 1
         }
@@ -32,7 +32,7 @@ public struct Crossword {
             return false
         }
 
-        guard layout.cell(at: location, in: grid) == .white else {
+        guard layout.cell(at: location) == .white else {
             return false
         }
 
@@ -48,7 +48,7 @@ public struct Crossword {
         // 2. A black cell
         let preceedingLocation = location - direction.delta
         return !grid.contains(preceedingLocation)
-            || layout.cell(at: preceedingLocation, in: grid) == .black
+            || layout.cell(at: preceedingLocation) == .black
     }
 
     static func makeSpans(
@@ -129,7 +129,7 @@ public struct Crossword {
         var charGrid = [[Character]](repeating: charRow, count: grid.height)
 
         for location in Locations(grid: grid) {
-            if layout.cell(at: location, in: grid) == .black {
+            if layout.cell(at: location) == .black {
                 charGrid[location.y][location.x] = "#"
             }
         }

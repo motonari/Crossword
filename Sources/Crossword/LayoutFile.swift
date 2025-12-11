@@ -19,10 +19,11 @@ import Foundation
 /// A layout is a bit field of the grid (raster scan order), where
 /// white cell is 0 and black cell is 1. Each layout starts at the
 /// next byte boundary.
-public struct LayoutFile {
+public struct LayoutFile: Sendable {
     public let grid: Grid
     public let wordCount: Int
-    public let layouts: [Layout]
+
+    let layoutData: LayoutData
 }
 
 // MARK: Initializers
@@ -33,13 +34,20 @@ extension LayoutFile {
     }
 }
 
+// MARK: Layout Sequence
+extension LayoutFile {
+    public var layouts: some Collection<Layout> {
+        layoutData
+    }
+}
+
 // MARK: State
 extension LayoutFile {
     public var maxIntersectionCount: Int {
-        guard let layout = layouts.first else {
+        guard let layout = layoutData.first else {
             return 0
         }
-        return layout.intersectionCount(in: grid)
+        return layout.score.0
     }
 }
 
@@ -75,9 +83,7 @@ extension LayoutFile {
                 try fileHandle.write(
                     contentsOf: withUnsafeBytes(of: UInt32(wordCount).littleEndian) { Data($0) })
 
-                for layout in layouts {
-                    try fileHandle.write(contentsOf: layout.dataRepresentation)
-                }
+                try fileHandle.write(contentsOf: layoutData.dataRepresentation)
 
                 try fileHandle.close()
                 _ = try FileManager.default.replaceItemAt(
@@ -109,18 +115,18 @@ extension LayoutFile {
                 let wordCount = Int(try fileHandle.load(as: UInt32.self))
 
                 let grid = Grid(width: width, height: height)
-                var layouts = [Layout]()
+                var layoutData = LayoutData(grid: grid)
                 while true {
                     guard let layout = try Layout(readingFrom: fileHandle, grid: grid) else {
                         break
                     }
-                    layouts.append(layout)
+                    layoutData.insert(layout, maxLayoutCount: Int.max)
                 }
 
                 let layoutFile = LayoutFile(
                     grid: grid,
                     wordCount: wordCount,
-                    layouts: layouts)
+                    layoutData: layoutData)
                 continuation.resume(returning: layoutFile)
             } catch {
                 continuation.resume(throwing: error)
