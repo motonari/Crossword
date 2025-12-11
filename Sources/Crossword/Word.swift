@@ -3,10 +3,21 @@ public struct Word: Sendable, Equatable, Hashable {
     private let characters: [Character]
 }
 
-/// Initializers
+// MARK: Initializers
 extension Word {
     public init(_ s: String) {
         self.characters = [Character](s)
+    }
+}
+
+extension Word {
+    var stableHashValue: Int {
+        characters.reduce(1) { result, ch in
+            result
+                ^ ch.utf8.reduce(1) { result, code in
+                    result + Int(code)
+                }
+        }
     }
 }
 

@@ -22,7 +22,8 @@ extension Solver {
     ///  - lexicon: Set of words that the crossword can use.
     ///  - mustWord: Set of words that the crossword must use.
     public init(for crossword: Crossword, lexicon: [Word], mustWords: [Word] = []) {
-        let seed = UInt64(abs(mustWords.reduce(1) { $0 ^ $1.hashValue }))
+        let signature = mustWords.reduce(1) { $0 ^ $1.stableHashValue }
+        let seed = UInt64(abs(signature))
         var rng = SplitMix64(seed: seed)
         self.crossword = crossword
         self.lexicon = lexicon.shuffled(using: &rng)
@@ -142,7 +143,7 @@ extension Solver {
     /// - Returns:
     ///  True if the domain has been modified.
     func enforceArcConsistency(solution: inout Solution) -> Bool {
-        var workQueue = Deque(crossword.overlaps.keys)
+        var workQueue = Deque(crossword.overlaps.keys.sorted())
         return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
     }
 

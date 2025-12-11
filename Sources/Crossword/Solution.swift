@@ -74,17 +74,17 @@ extension Solution {
         let spans = crossword.spans
         var domains = [Span: Domain](minimumCapacity: spans.count)
 
-        var unassignedMustWords = Set(mustWords)
+        var unassignedMustWords = mustWords
         for span in spans {
             // The default domain is a set of words in the lexicon.
             var values = lexicon
 
             // But if any must-word fits in the span, assign it here and call it a day.
-            if let eligibleMustWord = unassignedMustWords.first(where: { mustWord in
+            if let eligibleMustWordIndex = unassignedMustWords.firstIndex(where: { mustWord in
                 mustWord.count == span.length
             }) {
-                values = [eligibleMustWord]
-                unassignedMustWords.remove(eligibleMustWord)
+                values = [unassignedMustWords[eligibleMustWordIndex]]
+                unassignedMustWords.remove(at: eligibleMustWordIndex)
             }
 
             // Then, make Domain object.
