@@ -26,6 +26,9 @@ struct CrosswordMaker: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "How many words in the puzzle?")
     var count = 12
 
+    @Flag(name: .long, help: "Dump layout file.")
+    var dumpLayoutFile = false
+
     @Option(name: .long, help: "Width of the puzzle.")
     var width = 12
 
@@ -57,8 +60,11 @@ struct CrosswordMaker: AsyncParsableCommand {
             let grid = Grid(width: width, height: height)
             let crossword = Crossword(grid: grid, with: layout)
 
-            let testLayoutFileURL = URL(fileURLWithPath: "crossword_layout_test.data")
-            try await LayoutFile(layout: layout, wordCount: wordCount).write(to: testLayoutFileURL)
+            if dumpLayoutFile {
+                let testLayoutFileURL = URL(fileURLWithPath: "crossword_layout_dump.data")
+                try await LayoutFile(layout: layout, wordCount: wordCount).write(
+                    to: testLayoutFileURL)
+            }
 
             let solver = Solver(for: crossword, lexicon: lexicon, mustWords: mustWords)
 
