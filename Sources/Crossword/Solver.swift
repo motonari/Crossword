@@ -143,17 +143,18 @@ extension Solver {
     /// - Returns:
     ///  True if the domain has been modified.
     func enforceArcConsistency(solution: inout Solution) -> Bool {
-        var workQueue = Deque(crossword.overlaps.keys.sorted())
-        return enforceArcConsistencyInternal(solution: &solution, workQueue: &workQueue)
+        var workSet = Set(crossword.overlaps.keys)
+        return enforceArcConsistencyInternal(solution: &solution, workSet: &workSet)
     }
 
     private func enforceArcConsistencyInternal(
         solution: inout Solution,
-        workQueue: inout Deque<SpanPair>
+        workSet: inout Set<SpanPair>
     ) -> Bool {
         // AC-3 algorithm.
         var changed = false
-        while let spanPair = workQueue.popFirst() {
+        while !workSet.isEmpty {
+            let spanPair = workSet.removeFirst()
             let targetSpan = spanPair.span1
             let referenceSpan = spanPair.span2
             if solution.enforceArcConsistency(of: targetSpan, using: referenceSpan) {
@@ -163,7 +164,7 @@ extension Solver {
                     break
                 } else {
                     for affectedSpan in crossword.spansIntersecting(with: targetSpan) {
-                        workQueue.append(SpanPair(affectedSpan, targetSpan))
+                        workSet.insert(SpanPair(affectedSpan, targetSpan))
                     }
                 }
             }
@@ -187,52 +188,50 @@ extension Solver {
     /// - Returns:
     ///  True if the domain has been modified.
     func enforceGlobalConsistency(solution: inout Solution) -> Bool {
-        var workQueue = Deque<(Span, Word)>()
-
+        var anyDomainChanged = false
         for referenceSpan in crossword.spans {
-            let newWorkItems = globalConsistencyWorkItems(of: solution, for: referenceSpan)
-            workQueue.append(contentsOf: newWorkItems)
+            let referenceDomain = solution.domain(for: referenceSpan)
+            guard referenceDomain.count == 1 else {
+                continue
+            }
+
+            let changed = enforceGlobalConsistencyInternal(
+                solution: &solution,
+                referenceSpan: referenceSpan,
+                wordToRemove: referenceDomain[0])
+
+            if changed {
+                anyDomainChanged = true
+            }
         }
 
-        return enforceGlobalConsistencyInternal(solution: &solution, workQueue: &workQueue)
-    }
-
-    private func globalConsistencyWorkItems(of solution: Solution, for referenceSpan: Span)
-        -> [(Span, Word)]
-    {
-        var workItems = [(Span, Word)]()
-
-        let referenceDomain = solution.domain(for: referenceSpan)
-        guard referenceDomain.count == 1 else {
-            return []
-        }
-
-        for targetSpan in crossword.spans {
-            guard referenceSpan != targetSpan else { continue }
-            workItems.append((targetSpan, referenceDomain[0]))
-        }
-        return workItems
+        return anyDomainChanged
     }
 
     private func enforceGlobalConsistencyInternal(
         solution: inout Solution,
-        workQueue: inout Deque<(Span, Word)>
+        referenceSpan: Span,
+        wordToRemove: Word
     ) -> Bool {
         var anyDomainChanged = false
-        while let spanAndWord = workQueue.popFirst() {
-            let (targetSpan, wordToRemove) = spanAndWord
+
+        for targetSpan in crossword.spans {
+            guard referenceSpan != targetSpan else { continue }
 
             let (changed, remaining) = solution.remove(word: wordToRemove, from: targetSpan)
             if changed {
                 anyDomainChanged = true
-                let newWorkItems = globalConsistencyWorkItems(of: solution, for: targetSpan)
-                workQueue.append(contentsOf: newWorkItems)
-            }
 
-            if remaining == 0 {
-                break
+                if remaining == 1 {
+                    let newDomain = solution.domain(for: targetSpan)
+                    _ = enforceGlobalConsistencyInternal(
+                        solution: &solution,
+                        referenceSpan: targetSpan,
+                        wordToRemove: newDomain[0])
+                }
             }
         }
+
         return anyDomainChanged
     }
 }
