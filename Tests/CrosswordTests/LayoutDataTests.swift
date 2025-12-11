@@ -29,8 +29,8 @@ import Testing
 
         try #require(layoutData.count == 2)
 
-        #expect(layoutData[0] == layout2)
-        #expect(layoutData[1] == layout1)
+        #expect(Layout(grid: grid, data: layoutData[0]) == layout2)
+        #expect(Layout(grid: grid, data: layoutData[1]) == layout1)
     }
 
     @Test func truncation() throws {
@@ -46,7 +46,7 @@ import Testing
 
         try #require(layoutData.count == 2)
 
-        #expect(layoutData[0] == layout3)
-        #expect(layoutData[1] == layout2)
+        #expect(Layout(grid: grid, data: layoutData[0]) == layout3)
+        #expect(Layout(grid: grid, data: layoutData[1]) == layout2)
     }
 }

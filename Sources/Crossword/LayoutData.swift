@@ -79,7 +79,7 @@ extension LayoutData: Sequence {
         let data: Data
 
         var index = 0
-        mutating func next() -> Layout? {
+        mutating func next() -> Data? {
             guard index < offsets.count else {
                 return nil
             }
@@ -89,7 +89,7 @@ extension LayoutData: Sequence {
             let subdata = data.subdata(in: offset..<(offset + length))
 
             index += 1
-            return Layout(grid: grid, data: subdata)
+            return subdata
         }
     }
 
@@ -104,11 +104,11 @@ extension LayoutData: Collection {
     var startIndex: Index { offsets.startIndex }
     var endIndex: Index { offsets.endIndex }
 
-    subscript(_ index: Int) -> Layout {
+    subscript(_ index: Int) -> Data {
         let length = Layout.storageSize(for: grid)
         let offset = offsets[index]
         let subdata = data.subdata(in: offset..<(offset + length))
-        return Layout(grid: grid, data: subdata)
+        return subdata
     }
 
     func index(after i: Index) -> Index {

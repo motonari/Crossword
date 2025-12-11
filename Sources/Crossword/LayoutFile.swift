@@ -36,18 +36,25 @@ extension LayoutFile {
 
 // MARK: Layout Sequence
 extension LayoutFile {
-    public var layouts: some Collection<Layout> {
-        layoutData
+    public var layouts: some Sequence<Layout> {
+        layoutData.lazy.map { Layout(grid: grid, data: $0) }
     }
 }
 
 // MARK: State
 extension LayoutFile {
+    public var layoutCount: Int {
+        layoutData.count
+    }
+
     public var maxIntersectionCount: Int {
-        guard let layout = layoutData.first else {
-            return 0
+        var result = 0
+        for layout in layouts {
+            result = layout.score.0
+            break
         }
-        return layout.score.0
+
+        return result
     }
 }
 
@@ -83,7 +90,9 @@ extension LayoutFile {
                 try fileHandle.write(
                     contentsOf: withUnsafeBytes(of: UInt32(wordCount).littleEndian) { Data($0) })
 
-                try fileHandle.write(contentsOf: layoutData.dataRepresentation)
+                for chunk in layoutData {
+                    try fileHandle.write(contentsOf: chunk)
+                }
 
                 try fileHandle.close()
                 _ = try FileManager.default.replaceItemAt(

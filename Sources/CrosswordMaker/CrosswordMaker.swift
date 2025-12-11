@@ -41,14 +41,14 @@ struct CrosswordMaker: AsyncParsableCommand {
         let defaultLayoutFileURL = LayoutFile.defaultLayoutFileURL(
             grid: grid, wordCount: wordCount)
 
-        let layoutStore = try await LayoutFile(contentsOf: defaultLayoutFileURL)
+        let layoutFile = try await LayoutFile(contentsOf: defaultLayoutFileURL)
         var progressCount = 0
         var intersectionCount = 0
-        for blackCellLayout in layoutStore.layouts {
+        for blackCellLayout in layoutFile.layouts {
             progressCount += 1
             intersectionCount += blackCellLayout.score.0
             if progressCount % 1000 == 0 {
-                print("\(progressCount) / \(layoutStore.layouts.count)")
+                print("\(progressCount) / \(layoutFile.layoutCount)")
                 print("Score = \(intersectionCount / 1000)")
                 intersectionCount = 0
             }
@@ -89,7 +89,7 @@ struct CrosswordMaker: AsyncParsableCommand {
         let layoutFile = try? await LayoutFile(contentsOf: layoutFileURL)
         for await layoutFile in try factory.generate(basedOn: layoutFile) {
             print(
-                "score: \(layoutFile.maxIntersectionCount) number of layouts: \(layoutFile.layouts.count)"
+                "score: \(layoutFile.maxIntersectionCount) number of layouts: \(layoutFile.layoutCount)"
             )
 
             try await layoutFile.write(to: layoutFileURL)
