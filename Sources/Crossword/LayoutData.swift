@@ -8,6 +8,25 @@ struct LayoutData {
     var offsets = [Int]()
 }
 
+// MARK: Initializers
+extension LayoutData {
+    init(readingFrom fileHandle: FileHandle, grid: Grid) throws {
+        guard let data = try fileHandle.readToEnd() else {
+            throw LayoutFileError.invalidFileLength
+        }
+
+        let length = Layout.storageSize(for: grid)
+        var offsets = [Int]()
+        for offset in stride(from: 0, to: data.count, by: length) {
+            offsets.append(offset)
+        }
+
+        self.grid = grid
+        self.data = data
+        self.offsets = offsets
+    }
+}
+
 // MARK: Insertion
 extension LayoutData {
     mutating func insert(_ layout: Layout, maxLayoutCount: Int) {

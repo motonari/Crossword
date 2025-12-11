@@ -115,14 +115,7 @@ extension LayoutFile {
                 let wordCount = Int(try fileHandle.load(as: UInt32.self))
 
                 let grid = Grid(width: width, height: height)
-                var layoutData = LayoutData(grid: grid)
-                while true {
-                    guard let layout = try Layout(readingFrom: fileHandle, grid: grid) else {
-                        break
-                    }
-                    layoutData.insert(layout, maxLayoutCount: Int.max)
-                }
-
+                let layoutData = try LayoutData(readingFrom: fileHandle, grid: grid)
                 let layoutFile = LayoutFile(
                     grid: grid,
                     wordCount: wordCount,
