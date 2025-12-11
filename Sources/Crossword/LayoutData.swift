@@ -54,6 +54,14 @@ extension LayoutData {
             data.append(layout.dataRepresentation)
             offsets.insert(offset, at: insertingIndex)
         } else {
+            while maxLayoutCount < offsets.count {
+                // The layout data file was created with higher
+                // maxLayoutCount configuration; we truncate it here.
+                let offset = offsets.last!
+                data.replaceSubrange(offset..<(offset + length), with: Data())
+                offsets.removeLast()
+            }
+
             // Remove layout of the lowest score, and then insert.
             let offset = offsets.last!
             data.replaceSubrange(offset..<(offset + length), with: layout.dataRepresentation)
