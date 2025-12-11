@@ -222,15 +222,14 @@ extension Solver {
         while let spanAndWord = workQueue.popFirst() {
             let (targetSpan, wordToRemove) = spanAndWord
 
-            let changed = solution.remove(word: wordToRemove, from: targetSpan)
+            let (changed, remaining) = solution.remove(word: wordToRemove, from: targetSpan)
             if changed {
                 anyDomainChanged = true
                 let newWorkItems = globalConsistencyWorkItems(of: solution, for: targetSpan)
                 workQueue.append(contentsOf: newWorkItems)
             }
 
-            let newTargetDomain = solution.domain(for: targetSpan)
-            if newTargetDomain.isEmpty {
+            if remaining == 0 {
                 break
             }
         }

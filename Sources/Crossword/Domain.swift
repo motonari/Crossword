@@ -59,12 +59,12 @@ extension Domain {
         values = newValues
     }
 
-    mutating func remove(_ word: Word) -> Bool {
+    mutating func remove(_ word: Word) -> (Bool, Int) {
         guard let index = values.firstIndex(of: word) else {
-            return false
+            return (false, values.count)
         }
         values.remove(at: index)
-        return true
+        return (true, values.count)
     }
 }
 

@@ -44,7 +44,6 @@ extension LayoutData {
 
             if layout == existingLayout {
                 // duplication; ignore.
-                print("DUP")
                 return
             }
         }

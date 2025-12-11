@@ -8,7 +8,7 @@ struct CrosswordMaker: AsyncParsableCommand {
     var generateLayoutFile = false
 
     @Option(name: .customLong("max-layout-count"))
-    var maxLayoutCount: Int = 10_000_000
+    var maxLayoutCount: Int = 5_000_000
 
     @Option(
         name: [.customShort("m"), .customLong("mandatory-words")],

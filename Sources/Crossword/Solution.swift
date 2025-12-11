@@ -228,7 +228,7 @@ extension Solution {
         assign(words: [word], to: span)
     }
 
-    mutating func remove(word: Word, from span: Span) -> Bool {
+    mutating func remove(word: Word, from span: Span) -> (Bool, Int) {
         domains[span]!.remove(word)
     }
 }
