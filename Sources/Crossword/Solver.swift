@@ -116,15 +116,24 @@ extension Solver {
     }
 
     private func enforceConsistency(solution: inout Solution) {
-        var changed = true
-        while changed && solution.solvable {
-            changed = false
-            if enforceGlobalConsistency(solution: &solution) {
-                changed = true
+        var arcConsistent = false
+        var globalConsistent = false
+
+        while (!arcConsistent || !globalConsistent) && solution.solvable {
+            if !globalConsistent {
+                if enforceGlobalConsistency(solution: &solution) {
+                    // If changed, arcConsistency may be invalidated.
+                    arcConsistent = false
+                }
+                globalConsistent = true
             }
 
-            if enforceArcConsistency(solution: &solution) {
-                changed = true
+            if !arcConsistent {
+                if enforceArcConsistency(solution: &solution) {
+                    // If changed, globalConsistency may be invalidated.
+                    globalConsistent = false
+                }
+                arcConsistent = true
             }
         }
     }
