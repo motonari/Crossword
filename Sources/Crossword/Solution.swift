@@ -162,6 +162,20 @@ extension Solution {
     var unsolvedSpans: [Span] {
         crossword.spans.filter { span in
             domain(for: span).count > 1
+        }.sorted { span1, span2 in
+            let crossCount1 = crossword.spansIntersecting(with: span1).count
+            let crossCount2 = crossword.spansIntersecting(with: span2).count
+            if crossCount1 != crossCount2 {
+                return crossCount1 >= crossCount2
+            }
+
+            let domainCount1 = domain(for: span1).count
+            let domainCount2 = domain(for: span2).count
+            if domainCount1 != domainCount2 {
+                return domainCount1 >= domainCount2
+            }
+
+            return true
         }
     }
 

@@ -43,7 +43,7 @@ extension Solver {
             return
         }
 
-        try solveMustWords { mustWordsAssignment, stop in
+        try solveMustWords(solution: solution) { mustWordsAssignment, stop in
             var newSolution = solution
             for (span, word) in mustWordsAssignment {
                 newSolution.assign(word: word, to: span)
@@ -61,15 +61,19 @@ extension Solver {
         }
     }
 
-    private func solveMustWords(reporter: ([Span: Word], inout Bool) throws -> Void) throws {
+    private func solveMustWords(
+        solution: Solution, reporter: ([Span: Word], inout Bool) throws -> Void
+    ) throws {
         var stop = false
         try solveMustWordsInternal(
+            solution: solution,
             assignments: [Span: Word](),
             stop: &stop,
             reporter: reporter)
     }
 
     private func solveMustWordsInternal(
+        solution: Solution,
         assignments: [Span: Word],
         stop: inout Bool,
         reporter: ([Span: Word], inout Bool) throws -> Void
@@ -80,7 +84,7 @@ extension Solver {
             return
         }
 
-        for span in crossword.spans {
+        for span in solution.unsolvedSpans {
             guard !assignments.keys.contains(span) else {
                 // This span has gotten one of the must words.
                 continue
@@ -100,7 +104,10 @@ extension Solver {
                 var newAssignments = assignments
                 newAssignments[span] = mustWord
                 try solveMustWordsInternal(
-                    assignments: newAssignments, stop: &stop, reporter: reporter)
+                    solution: solution,
+                    assignments: newAssignments,
+                    stop: &stop,
+                    reporter: reporter)
                 if stop {
                     return
                 }
