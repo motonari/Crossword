@@ -62,8 +62,7 @@ extension LayoutGeneratorIterator: IteratorProtocol {
         var blackCells = [Location]()
         for location in Locations(grid: grid) {
             let useBlackCell = spans.allSatisfy { span in
-                let (xRange, yRange) = span.range
-                return !xRange.contains(location.x) || !yRange.contains(location.y)
+                return !span.rangeX.contains(location.x) || !span.rangeY.contains(location.y)
             }
 
             if useBlackCell {

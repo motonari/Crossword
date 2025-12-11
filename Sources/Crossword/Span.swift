@@ -6,7 +6,8 @@ struct Span {
     let length: Int
     let direction: Direction
 
-    let range: (Range<Int>, Range<Int>)
+    let rangeX: Range<Int>
+    let rangeY: Range<Int>
     let startEdge: Location
     let end: Location
 }
@@ -28,7 +29,9 @@ extension Span {
         self.startEdge = start - direction.delta
         self.end = start + (direction.deltaX * length, direction.deltaY * length)
 
-        self.range = Self.spanRange(start, length, direction)
+        let (rangeX, rangeY) = Self.spanRange(start, length, direction)
+        self.rangeX = rangeX
+        self.rangeY = rangeY
     }
 
     /// Creates a span for a specified coordinates, length, and
@@ -185,8 +188,6 @@ extension Span {
 /// Compatibility test
 extension Span {
     func compatibleStart(with other: Span) -> Bool {
-        let (otherRangeX, otherRangeY) = other.range
-
         // The other span contains a cell which is prior to the this
         // span's starting cell. For example, "THIS" and "OTHER"
         // cannot co-exist in this way because "HTHIS" is not a word.
@@ -197,12 +198,10 @@ extension Span {
         //  E
         //  R
 
-        return !otherRangeX.contains(startEdge.x) || !otherRangeY.contains(startEdge.y)
+        return !other.rangeX.contains(startEdge.x) || !other.rangeY.contains(startEdge.y)
     }
 
     func compatibleEnd(with other: Span) -> Bool {
-        let (otherRangeX, otherRangeY) = other.range
-
         // The other span contains a cell which is after the this
         // span's last cell. For example, "THIS" and "OTHER"
         // cannot co-exist in this way because "THISH" is not a word.
@@ -213,7 +212,7 @@ extension Span {
         //      E
         //      R
 
-        return !otherRangeX.contains(end.x) || !otherRangeY.contains(end.y)
+        return !other.rangeX.contains(end.x) || !other.rangeY.contains(end.y)
     }
 
     /// Returns true if the span can co-exist with the other span.
@@ -242,20 +241,17 @@ extension Span {
             return false
         }
 
-        let (thisRangeX, thisRangeY) = range
-        let (otherRangeX, otherRangeY) = other.range
-
         if direction == .across {
-            if thisRangeX.overlaps(otherRangeX)
-                && (thisRangeY.lowerBound == otherRangeY.lowerBound - 1
-                    || thisRangeY.lowerBound == otherRangeY.lowerBound + 1)
+            if rangeX.overlaps(other.rangeX)
+                && (rangeY.lowerBound == other.rangeY.lowerBound - 1
+                    || rangeY.lowerBound == other.rangeY.lowerBound + 1)
             {
                 return true
             }
         } else {
-            if thisRangeY.overlaps(otherRangeY)
-                && (thisRangeX.lowerBound == otherRangeX.lowerBound - 1
-                    || thisRangeX.lowerBound == otherRangeX.lowerBound + 1)
+            if rangeY.overlaps(other.rangeY)
+                && (rangeX.lowerBound == other.rangeX.lowerBound - 1
+                    || rangeX.lowerBound == other.rangeX.lowerBound + 1)
             {
                 return true
             }
