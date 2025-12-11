@@ -181,18 +181,9 @@ extension Solution {
     }
 
     /// List of unsolved spans.
-    ///
-    /// The solver tries to solve them with DFS. To reduce the tree
-    /// size, sort the list from smaller domain to larger domain, with
-    /// the expectation that the larger domain would be reduced
-    /// quickly as DFS goes deeper.
     var unsolvedSpans: [Span] {
         crossword.spans.filter { span in
             domain(for: span).count > 1
-        }.sorted { span1, span2 in
-            let domainCount1 = domain(for: span1).count
-            let domainCount2 = domain(for: span2).count
-            return domainCount1 < domainCount2
         }
     }
 

@@ -162,7 +162,7 @@ extension Crossword {
                 spanPair.span1 == spanB
             })
 
-            return intersectingCountA > intersectingCountB
+            return intersectingCountA >= intersectingCountB
         })
 
         self.grid = grid
