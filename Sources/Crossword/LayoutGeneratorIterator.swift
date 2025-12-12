@@ -1,5 +1,5 @@
 import Collections
-import CryptoKit
+import Foundation
 
 // MARK: Structure
 
@@ -12,7 +12,7 @@ struct LayoutGeneratorIterator {
     let beamWidth: Int
 
     private var workQueue = Deque<SpanSet>()
-    private let visitLog = SearchLog<SpanSet>()
+    private let visitLog = SearchLog<[UInt8]>()
 }
 
 // MARK: Initializers
@@ -52,10 +52,15 @@ extension LayoutGeneratorIterator: IteratorProtocol {
 
         for span in nextSpans {
             let newLayout = baseLayout.union([span])
-            if visitLog.firstVisit(newLayout) {
+            if visitLog.firstVisit(fingerprint(of: newLayout)) {
                 workQueue.prepend(newLayout)
             }
         }
+    }
+
+    private func fingerprint(of spanSet: SpanSet) -> [UInt8] {
+        let layout = blackCells(spans: spanSet)
+        return Array(layout.dataRepresentation)
     }
 
     private func blackCells(spans: SpanSet) -> Layout {
@@ -136,18 +141,8 @@ extension TreeSet where Element == Span {
         return
             candidates
             .shuffled()
-            .sorted(by: { $0.0 > $1.0 })
+            .sorted(by: { $0.0 >= $1.0 })
             .prefix(beamWidth).map { $0.1 }
     }
-
 }
 
-extension TreeSet: Digestable where Element == Span {
-    var digest: SHA256.Digest {
-        var hasher = SHA256()
-        for span in self.sorted() {
-            span.hash(into: &hasher)
-        }
-        return hasher.finalize()
-    }
-}

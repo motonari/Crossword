@@ -192,7 +192,7 @@ extension Solution {
 }
 
 // MARK: Digestable
-extension Solution: Digestable {
+extension Solution {
     /// SHA256 hash for memorization in the dynamic programming
     /// optimization in DFS.
     var digest: SHA256.Digest {

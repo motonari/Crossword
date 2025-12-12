@@ -10,7 +10,7 @@ public struct Solver {
     private let crossword: Crossword
     private let lexicon: [Word]
     private let mustWords: [Word]
-    private let visitLog = SearchLog<Solution>()
+    private let visitLog = SearchLog<SHA256.Digest>()
 }
 
 // MARK: Initializers
@@ -181,7 +181,7 @@ extension Solver {
     ) throws {
         // Optimization by memorization. If we have seen this solution
         // before, we don't have to process it again.
-        guard visitLog.firstVisit(solution) else {
+        guard visitLog.firstVisit(solution.digest) else {
             return
         }
 
