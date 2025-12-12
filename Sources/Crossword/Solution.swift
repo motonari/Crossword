@@ -186,6 +186,9 @@ extension Solution {
         domains[span]!
     }
 
+    var complexity: Double {
+        domains.values.reduce(1.0) { $0 * Double($1.count) }
+    }
 }
 
 // MARK: Digestable

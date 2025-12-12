@@ -149,6 +149,7 @@ extension Solver {
             return
         }
 
+        var nextSolutions = [Solution]()
         for value in candidates {
             var newSolution = solution
 
@@ -157,9 +158,13 @@ extension Solver {
             if !newSolution.solvable {
                 continue
             }
+            nextSolutions.append(newSolution)
+        }
 
+        nextSolutions.sort { $0.complexity < $1.complexity }
+        for nextSolution in nextSolutions.prefix(2) {
             try solveInternal(
-                consistentSolution: newSolution,
+                consistentSolution: nextSolution,
                 stop: &stop,
                 solutionReporter: solutionReporter)
             if stop {
