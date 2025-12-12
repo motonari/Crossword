@@ -220,7 +220,7 @@ extension HTMLSolutionRenderer: SolutionRenderer {
                     </div>
 
                     <div class="acknowledgement">
-                    Made by Kyosuke and Moto, his dad. Thoughts or suggestions? Send me an email! <address>Email: <a href="mailto:motonari.ito@gmail.com">motonari.ito@gmail.com</a></address> 
+                    Made by Kyosuke and Moto, his dad. Thoughts or suggestions? <address>Email: <a href="mailto:motonari.ito@gmail.com">motonari.ito@gmail.com</a></address> 
                     </div>
 
                     <script>
