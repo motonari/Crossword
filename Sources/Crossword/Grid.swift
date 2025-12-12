@@ -1,6 +1,6 @@
 public struct Grid: Equatable, Sendable {
-    let width: Int
-    let height: Int
+    public let width: Int
+    public let height: Int
 
     public init(width: Int, height: Int) {
         guard width > 0, height > 0 else {

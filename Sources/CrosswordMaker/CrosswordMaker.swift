@@ -52,8 +52,9 @@ struct CrosswordMaker: AsyncParsableCommand {
             progressCount += 1
             intersectionCount += layout.score.0
             if progressCount % 1000 == 0 {
-                print("\(progressCount) / \(layoutFile.layoutCount)")
-                print("Score = \(intersectionCount / 1000)")
+                print(
+                    "\(progressCount) / \(layoutFile.layoutCount) Average Score = \(intersectionCount / 1000)"
+                )
                 intersectionCount = 0
             }
 
@@ -70,6 +71,10 @@ struct CrosswordMaker: AsyncParsableCommand {
 
             var solutionWasFound = false
             try solver.solve { (solution, stop) in
+                print("A solution was found.")
+                let (intersections, whiteCells) = layout.score
+                print(" Number Of Intersections: \(intersections)")
+                print(" Density: \(Double(whiteCells) / Double(grid.width * grid.height))")
                 let renderer = HTMLSolutionRenderer(to: URL(fileURLWithPath: outputFileName))
                 try renderer.render(solution: solution)
                 stop = true
