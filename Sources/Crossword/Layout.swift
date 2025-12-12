@@ -6,7 +6,7 @@ public struct Layout: Sendable {
     let grid: Grid
 
     private var storage: [UInt8]
-    private let scoreCache = ScoreCacheWrapper()
+    private let cache = CacheWrapper()
 }
 
 
@@ -25,7 +25,8 @@ extension Layout {
     ///  - grid: The size of the crossword.
     ///  - blackCells: List of black cell locations.
     init(grid: Grid, blackCells: [Location]) {
-        self.init(grid: grid)
+        let storageSize = Self.storageSize(for: grid)
+        var storage = [UInt8](repeating: 0, count: storageSize)
 
         for location in blackCells {
             guard grid.contains(location) else {
@@ -41,6 +42,8 @@ extension Layout {
             }
             storage[byteOffset] |= (0x01 << bitOffset)
         }
+
+        self.init(grid: grid, storage: storage)
     }
 
     /// Creates a layout with specified black cells.
@@ -61,18 +64,17 @@ extension Layout {
     init?(readingFrom fileHandle: FileHandle, grid: Grid) throws {
         let bytesPerLayout = Self.storageSize(for: grid)
         guard
-            let storage = try fileHandle.read(upToCount: bytesPerLayout),
-            storage.count == bytesPerLayout
+            let data = try fileHandle.read(upToCount: bytesPerLayout),
+            data.count == bytesPerLayout
         else {
             return nil
         }
-        self.grid = grid
-        self.storage = Array(storage)
+        self.init(grid: grid, data: data)
     }
 
+    /// Creates a layout from Data
     init(grid: Grid, data: Data) {
-        self.grid = grid
-        self.storage = Array(data)
+        self.init(grid: grid, storage: Array(data))
     }
 }
 
@@ -149,32 +151,97 @@ extension Layout {
 
     }
 
-    /// Returns a tuple `(byteOffset, bitOffset)` for the specified raster index.
-    /// - Parameters:
-    ///  - index: The raster index of the cell's coordinates, which is `y * width + x`.
-    /// - Returns: A tuple of byte offset and bit offset.
-    ///
-    private func offset(for index: Int) -> (Int, Int) {
-        let byteOffset = index / 8
-        let bitOffset = 7 - index % 8
-        return (byteOffset, bitOffset)
+}
+
+// MARK: Spans
+extension Layout {
+    var spans: [Span] {
+        cache.spans(of: self)
     }
 
-    /// Returns a tuple `(byteOffset, bitOffset)` for the specified raster index.
-    /// - Parameters:
-    ///  - index: The raster index of the cell's coordinates, which is `y * width + x`.
-    /// - Returns: A tuple of byte offset and bit offset.
-    ///
-    private func offset(at location: Location, in grid: Grid) -> (Int, Int) {
-        let index = location.y * grid.width + location.x
-        return offset(for: index)
+    func computeSpans() -> [Span] {
+        var spans = [Span]()
+
+        for location in Locations(grid: grid) {
+            if spanStarts(at: location, direction: .down, in: grid, with: self) {
+                let length = spanLength(
+                    at: location,
+                    direction: .down,
+                    in: grid,
+                    with: self)
+
+                if length >= 2 {
+                    let placeholder = Span(at: location, length: length, direction: .down)
+                    spans.append(placeholder)
+                }
+            }
+
+            if spanStarts(at: location, direction: .across, in: grid, with: self) {
+                let length = spanLength(
+                    at: location,
+                    direction: .across,
+                    in: grid,
+                    with: self)
+                if length >= 2 {
+                    let span = Span(at: location, length: length, direction: .across)
+                    spans.append(span)
+                }
+            }
+        }
+        return spans 
+    }
+
+    private func spanStarts(
+        at location: Location,
+        direction: Direction,
+        in grid: Grid,
+        with layout: Layout
+    ) -> Bool {
+        guard grid.contains(location) else {
+            return false
+        }
+
+        guard layout.cell(at: location) == .white else {
+            return false
+        }
+
+        // Another span ("CAT") cannot share the span's ("DOG")
+        // preceeding cell because "ADOG" is not a word.
+        //
+        //  C
+        //  ADOG
+        //  T
+        //
+        // It means the preceeding cell must be either:
+        // 1. Outside of the grid.
+        // 2. A black cell
+        let preceedingLocation = location - direction.delta
+        return !grid.contains(preceedingLocation)
+            || layout.cell(at: preceedingLocation) == .black
+    }
+
+    private func spanLength(
+        at start: Location,
+        direction: Direction,
+        in grid: Grid,
+        with layout: Layout
+    ) -> Int {
+
+        var length = 0
+        var location = start
+        while grid.contains(location) && layout.cell(at: location) == .white {
+            location += direction.delta
+            length += 1
+        }
+
+        return length
     }
 }
 
 // MARK: Statistics
 extension Layout {
     public var score: (Int, Int) {
-        scoreCache.score(of: self)
+        cache.score(of: self)
     }
     
     /// Score of the layout.
@@ -232,7 +299,7 @@ extension Layout {
     }
 }
 
-/// Static utility functions
+// MARK: Static utility functions
 extension Layout {
     /// Number of bytes necessary to store this layout.
     static func storageSize(for grid: Grid) -> Int {
@@ -242,14 +309,51 @@ extension Layout {
     }
 }
 
-fileprivate class ScoreCacheWrapper: @unchecked Sendable {
-    private let cachedValue = Mutex<(Int, Int)?>(nil)
+// MARK: Utility functions
+
+/// Returns a tuple `(byteOffset, bitOffset)` for the specified raster index.
+/// - Parameters:
+///  - index: The raster index of the cell's coordinates, which is `y * width + x`.
+/// - Returns: A tuple of byte offset and bit offset.
+///
+private func offset(for index: Int) -> (Int, Int) {
+    let byteOffset = index / 8
+    let bitOffset = 7 - index % 8
+    return (byteOffset, bitOffset)
+}
+
+/// Returns a tuple `(byteOffset, bitOffset)` for the specified raster index.
+/// - Parameters:
+///  - index: The raster index of the cell's coordinates, which is `y * width + x`.
+/// - Returns: A tuple of byte offset and bit offset.
+///
+private func offset(at location: Location, in grid: Grid) -> (Int, Int) {
+    let index = location.y * grid.width + location.x
+    return offset(for: index)
+}
+
+// MARK: Cache
+fileprivate class CacheWrapper: @unchecked Sendable {
+    private let scoreValue = Mutex<(Int, Int)?>(nil)
+    private let spansValue = Mutex<[Span]?>(nil)
+
     func score(of layout: Layout) -> (Int, Int) {
-        cachedValue.withLock { current in
+        scoreValue.withLock { current in
             if let current {
                 return current
             }
             let newValue = layout.computeScore()
+            current = newValue
+            return newValue
+        }
+    }
+
+    func spans(of layout: Layout) -> [Span] {
+        spansValue.withLock { current in
+            if let current {
+                return current
+            }
+            let newValue = layout.computeSpans()
             current = newValue
             return newValue
         }

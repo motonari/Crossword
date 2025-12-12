@@ -5,87 +5,6 @@ public struct Crossword {
     let layout: Layout
     let overlaps: [SpanPair: (Int, Int)]
 
-    static func spanLength(
-        at start: Location,
-        direction: Direction,
-        in grid: Grid,
-        with layout: Layout
-    ) -> Int {
-
-        var length = 0
-        var location = start
-        while grid.contains(location) && layout.cell(at: location) == .white {
-            location += direction.delta
-            length += 1
-        }
-
-        return length
-    }
-
-    static func spanStarts(
-        at location: Location,
-        direction: Direction,
-        in grid: Grid,
-        with layout: Layout
-    ) -> Bool {
-        guard grid.contains(location) else {
-            return false
-        }
-
-        guard layout.cell(at: location) == .white else {
-            return false
-        }
-
-        // Another span ("CAT") cannot share the span's ("DOG")
-        // preceeding cell because "ADOG" is not a word.
-        //
-        //  C
-        //  ADOG
-        //  T
-        //
-        // It means the preceeding cell must be either:
-        // 1. Outside of the grid.
-        // 2. A black cell
-        let preceedingLocation = location - direction.delta
-        return !grid.contains(preceedingLocation)
-            || layout.cell(at: preceedingLocation) == .black
-    }
-
-    static func makeSpans(
-        for grid: Grid,
-        with layout: Layout
-    ) -> [Span] {
-        var spans = [Span]()
-
-        for location in Locations(grid: grid) {
-            if spanStarts(at: location, direction: .down, in: grid, with: layout) {
-                let length = spanLength(
-                    at: location,
-                    direction: .down,
-                    in: grid,
-                    with: layout)
-
-                if length >= 2 {
-                    let placeholder = Span(at: location, length: length, direction: .down)
-                    spans.append(placeholder)
-                }
-            }
-
-            if spanStarts(at: location, direction: .across, in: grid, with: layout) {
-                let length = spanLength(
-                    at: location,
-                    direction: .across,
-                    in: grid,
-                    with: layout)
-                if length >= 2 {
-                    let span = Span(at: location, length: length, direction: .across)
-                    spans.append(span)
-                }
-            }
-        }
-        return spans
-    }
-
     static func makeOverlaps(among spans: [Span])
         -> [SpanPair: (Int, Int)]
     {
@@ -150,7 +69,7 @@ public struct Crossword {
 extension Crossword {
     /// Creates with layout.
     public init(grid: Grid, with layout: Layout) {
-        var spans = Self.makeSpans(for: grid, with: layout)
+        var spans = layout.spans
         let overlaps = Self.makeOverlaps(among: spans)
 
         spans.sort(by: { spanA, spanB in
