@@ -8,7 +8,7 @@ class SearchLog<Fingerprint: Hashable> {
 
     func firstVisit(_ fingerprint: Fingerprint) -> Bool {
         let (inserted, _) = log.insert(fingerprint)
-        if log.count > maxCount {
+        while log.count > maxCount {
             log.removeFirst()
         }
         return inserted
