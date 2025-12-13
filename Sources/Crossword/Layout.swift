@@ -6,7 +6,7 @@ public struct Layout: Sendable {
     let grid: Grid
 
     private var storage: [UInt8]
-    private let cache = CacheWrapper()
+    private var cache = CacheWrapper()
 }
 
 
@@ -23,7 +23,7 @@ extension Layout {
     /// Creates a layout with specified color.
     init(grid: Grid, filling color: Color) {
         let storageSize = Self.storageSize(for: grid)
-        let fillByte = color == .black ? UInt8(1) : UInt8(0)
+        let fillByte = color == .black ? UInt8(0xFF) : UInt8(0x00)
         let storage = [UInt8](repeating: fillByte, count: storageSize)
 
         self.init(grid: grid, storage: storage)
@@ -181,13 +181,27 @@ extension Layout {
         let bits = storage[byteOffset]
         let newBits = switch color {
         case .white:
-            bits | ~(0x01 << bitOffset)
+            bits & ~(0x01 << bitOffset)
         case .black:
             bits | (0x01 << bitOffset)
         }
 
         storage[byteOffset] = newBits
-        cache.invalidate()
+
+        if !isKnownUniquelyReferenced(&cache) {
+            cache = CacheWrapper()
+        }
+    }
+}
+
+// MARK: Span insertion
+extension Layout {
+    mutating func insert(_ span: Span) {
+        var location = span.start
+        while location != span.lastEdge {
+            update(at: location, to: .white)
+            location += span.direction.delta
+        }
     }
 }
 
@@ -374,15 +388,6 @@ private func offset(at location: Location, in grid: Grid) -> (Int, Int) {
 fileprivate class CacheWrapper: @unchecked Sendable {
     private let scoreValue = Mutex<(Int, Int)?>(nil)
     private let spansValue = Mutex<[Span]?>(nil)
-
-    func invalidate() {
-        scoreValue.withLock { score in
-            score = nil
-        }
-        spansValue.withLock { spans in
-            spans = nil
-        }
-    }
 
     func score(of layout: Layout) -> (Int, Int) {
         scoreValue.withLock { current in
