@@ -15,8 +15,18 @@ extension Layout {
     /// Creates a layout with all white cells.
     init(grid: Grid) {
         let storageSize = Self.storageSize(for: grid)
-        self.grid = grid
-        self.storage = [UInt8](repeating: 0, count: storageSize)
+        let storage = [UInt8](repeating: 0, count: storageSize)
+
+        self.init(grid: grid, storage: storage)
+    }
+
+    /// Creates a layout with specified color.
+    init(grid: Grid, filling color: Color) {
+        let storageSize = Self.storageSize(for: grid)
+        let fillByte = color == .black ? UInt8(1) : UInt8(0)
+        let storage = [UInt8](repeating: fillByte, count: storageSize)
+
+        self.init(grid: grid, storage: storage)
     }
 
     /// Creates a layout with specified black cells.
@@ -119,7 +129,7 @@ extension Layout: Hashable {
     }
 }
 
-/// Cell accessors
+// MARK: Cell accessors
 extension Layout {
     enum Color {
         case white
@@ -151,6 +161,34 @@ extension Layout {
 
     }
 
+    mutating func update(at location: Location, to color: Color) {
+        guard grid.contains(location) else {
+            fatalError(
+                """
+                Location (\(location.x), \(location.y)) is
+                out of bound of the grid \(grid.width) x \(grid.height).
+                """
+            )
+        }
+
+        let index = location.y * grid.width + location.x
+        let (byteOffset, bitOffset) = offset(for: index)
+
+        guard byteOffset < storage.count else {
+            fatalError("Out of bound index: \(index)")
+        }
+
+        let bits = storage[byteOffset]
+        let newBits = switch color {
+        case .white:
+            bits | ~(0x01 << bitOffset)
+        case .black:
+            bits | (0x01 << bitOffset)
+        }
+
+        storage[byteOffset] = newBits
+        cache.invalidate()
+    }
 }
 
 // MARK: Spans
@@ -188,7 +226,7 @@ extension Layout {
                 }
             }
         }
-        return spans 
+        return spans
     }
 
     private func spanStarts(
@@ -243,7 +281,7 @@ extension Layout {
     public var score: (Int, Int) {
         cache.score(of: self)
     }
-    
+
     /// Score of the layout.
     ///
     /// Score is a tuple of the number of intersections and the number
@@ -336,6 +374,15 @@ private func offset(at location: Location, in grid: Grid) -> (Int, Int) {
 fileprivate class CacheWrapper: @unchecked Sendable {
     private let scoreValue = Mutex<(Int, Int)?>(nil)
     private let spansValue = Mutex<[Span]?>(nil)
+
+    func invalidate() {
+        scoreValue.withLock { score in
+            score = nil
+        }
+        spansValue.withLock { spans in
+            spans = nil
+        }
+    }
 
     func score(of layout: Layout) -> (Int, Int) {
         scoreValue.withLock { current in

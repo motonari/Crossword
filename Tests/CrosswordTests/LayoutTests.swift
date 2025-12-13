@@ -85,4 +85,34 @@ import Testing
                 Location(3, 2),
             ])
     }
+
+    @Test func updateToBlack() throws {
+        // ::
+        // #:
+
+        let grid = Grid(width: 2, height: 2)
+        var layout = Layout(grid: grid)
+        layout.update(at: Location(0, 1), to: .black)
+        
+        #expect(
+            layout.blackCells() == [
+                Location(0, 1),
+            ])
+    }
+    
+    @Test func updateToWhite() throws {
+        // ##
+        // #:
+
+        let grid = Grid(width: 2, height: 2)
+        var layout = Layout(grid: grid, filling: .black)
+        layout.update(at: Location(1, 1), to: .white)
+        
+        #expect(
+            layout.blackCells() == [
+                Location(0, 0),
+                Location(1, 0),
+                Location(0, 1),
+            ])
+    }
 }
