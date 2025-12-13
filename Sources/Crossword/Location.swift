@@ -19,6 +19,10 @@ public struct Location {
         return Location(lhs.x - rhs.0, lhs.y - rhs.1)
     }
 
+    public static func - (lhs: Location, rhs: Location) -> (Int, Int) {
+        return (lhs.x - rhs.x, lhs.y - rhs.y)
+    }
+
     public static func += (lhs: inout Location, delta: (Int, Int)) {
         lhs.x += delta.0
         lhs.y += delta.1

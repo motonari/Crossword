@@ -5,13 +5,12 @@ import Foundation
 
 /// The iterator to generate layouts
 struct LayoutGeneratorIterator {
-    typealias SpanSet = TreeSet<Span>
     let grid: Grid
     let wordCount: Int
     let minWordLength: Int
     let beamWidth: Int
 
-    private var workQueue = Deque<SpanSet>()
+    private var workQueue = Deque<Layout>()
     private let visitLog = SearchLog<[UInt8]>()
 }
 
@@ -22,7 +21,7 @@ extension LayoutGeneratorIterator {
         self.wordCount = wordCount
         self.minWordLength = minWordLength
         self.beamWidth = beamWidth
-        self.workQueue.prepend(SpanSet([]))
+        self.workQueue.prepend(Layout(grid: grid, filling: .black))
     }
 }
 
@@ -30,62 +29,38 @@ extension LayoutGeneratorIterator {
 extension LayoutGeneratorIterator: IteratorProtocol {
     mutating func next() -> Layout? {
         while true {
-            guard let workItem = workQueue.popFirst() else {
+            guard let layout = workQueue.popFirst() else {
                 // End of search
                 return nil
             }
 
-            if workItem.count == wordCount {
+            if layout.spans.count == wordCount {
                 // Search completed.
-                return blackCells(spans: workItem)
+                return layout
             } else {
-                expand(workItem)
+                expand(layout)
             }
         }
     }
 
-    private mutating func expand(_ baseLayout: SpanSet) {
-        let nextSpans = baseLayout.nextSpans(
-            grid: grid,
-            minWordLength: minWordLength,
-            beamWidth: beamWidth)
-
-        for span in nextSpans {
-            let newLayout = baseLayout.union([span])
+    private mutating func expand(_ baseLayout: Layout) {
+        let newSpans = expandInternal(baseLayout)
+        for newSpan in newSpans {
+            var newLayout = baseLayout
+            newLayout.insert(newSpan)
             if visitLog.firstVisit(fingerprint(of: newLayout)) {
                 workQueue.prepend(newLayout)
             }
         }
     }
 
-    private func fingerprint(of spanSet: SpanSet) -> [UInt8] {
-        let layout = blackCells(spans: spanSet)
+    private func fingerprint(of layout: Layout) -> [UInt8] {
         return Array(layout.dataRepresentation)
     }
 
-    private func blackCells(spans: SpanSet) -> Layout {
-        var blackCells = [Location]()
-        for location in Locations(grid: grid) {
-            let useBlackCell = spans.allSatisfy { span in
-                return !span.rangeX.contains(location.x) || !span.rangeY.contains(location.y)
-            }
-
-            if useBlackCell {
-                blackCells.append(location)
-            }
-        }
-        return Layout(grid: grid, blackCells: blackCells)
-    }
-}
-
-extension TreeSet where Element == Span {
-    fileprivate func nextSpans(
-        grid: Grid,
-        minWordLength: Int,
-        beamWidth: Int
-    ) -> [Span] {
+    private func expandInternal(_ layout: Layout) -> [Span] {
         var candidates = [(Int, Span)]()
-        let spans = Array(self)
+        let spans = layout.spans
 
         for direction in Direction.allCases {
             for location in Locations(grid: grid) {
@@ -145,4 +120,3 @@ extension TreeSet where Element == Span {
             .prefix(beamWidth).map { $0.1 }
     }
 }
-

@@ -8,8 +8,8 @@ struct Span {
 
     let rangeX: Range<Int>
     let rangeY: Range<Int>
-    let startEdge: Location
-    let end: Location
+    let firstEdge: Location
+    let lastEdge: Location
 }
 
 // Initializers
@@ -26,8 +26,8 @@ extension Span {
         self.length = length
         self.direction = direction
 
-        self.startEdge = start - direction.delta
-        self.end = start + (direction.deltaX * length, direction.deltaY * length)
+        self.firstEdge = start - direction.delta
+        self.lastEdge = start + (direction.deltaX * length, direction.deltaY * length)
 
         let (rangeX, rangeY) = Self.spanRange(start, length, direction)
         self.rangeX = rangeX
@@ -108,7 +108,7 @@ extension Span: CustomStringConvertible, CustomDebugStringConvertible {
     }
 
     var description: String {
-        "Span(\(start) -> \(end))"
+        "Span(\(start) ..< \(lastEdge))"
     }
 }
 
@@ -198,7 +198,7 @@ extension Span {
         //  E
         //  R
 
-        return !other.rangeX.contains(startEdge.x) || !other.rangeY.contains(startEdge.y)
+        return !other.rangeX.contains(firstEdge.x) || !other.rangeY.contains(firstEdge.y)
     }
 
     func compatibleEnd(with other: Span) -> Bool {
@@ -212,7 +212,7 @@ extension Span {
         //      E
         //      R
 
-        return !other.rangeX.contains(end.x) || !other.rangeY.contains(end.y)
+        return !other.rangeX.contains(lastEdge.x) || !other.rangeY.contains(lastEdge.y)
     }
 
     /// Returns true if the span can co-exist with the other span.
