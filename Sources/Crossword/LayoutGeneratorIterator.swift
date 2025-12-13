@@ -44,10 +44,17 @@ extension LayoutGeneratorIterator: IteratorProtocol {
     }
 
     private mutating func expand(_ baseLayout: Layout) {
-        let newSpans = expandInternal(baseLayout)
-        for newSpan in newSpans {
-            var newLayout = baseLayout
-            newLayout.insert(newSpan)
+        let newLayouts = expandInternal(baseLayout)
+        let sortedNewLayouts = newLayouts
+          .shuffled()
+          .sorted(by: { layout1, layout2 in
+                      let (intersectionCount1, _) = layout1.score
+                      let (intersectionCount2, _) = layout2.score
+                      return intersectionCount1 >= intersectionCount2
+                  })
+          .prefix(beamWidth)
+
+        for newLayout in sortedNewLayouts {
             if visitLog.firstVisit(fingerprint(of: newLayout)) {
                 workQueue.prepend(newLayout)
             }
@@ -55,12 +62,14 @@ extension LayoutGeneratorIterator: IteratorProtocol {
     }
 
     private func fingerprint(of layout: Layout) -> [UInt8] {
-        return Array(layout.dataRepresentation)
+        return layout.storage
     }
 
-    private func expandInternal(_ layout: Layout) -> [Span] {
-        var candidates = [(Int, Span)]()
+    private func expandInternal(_ layout: Layout) -> [Layout] {
+        var candidates = [Layout]()
         let spans = layout.spans
+        let edgeSet = makeEdgeSet(spans: spans)
+        let blackSet = Set(layout.blackCells())
 
         for direction in Direction.allCases {
             for location in Locations(grid: grid) {
@@ -77,8 +86,11 @@ extension LayoutGeneratorIterator: IteratorProtocol {
 
                 for length in (minWordLength...maxLength) {
                     let newSpan = Span(at: location, length: length, direction: direction)
+                    guard !spans.contains(newSpan) else {
+                        continue
+                    }
 
-                    guard spans.allSatisfy({ newSpan.compatibleStart(with: $0) }) else {
+                    guard edgeSet.contains(newSpan.firstEdge) || blackSet.contains(newSpan.firstEdge) else {
                         // Optimization. If `newSpan`'s start is not
                         // compatible with an existing span, it won't
                         // be compatible if we extend the length of
@@ -86,7 +98,11 @@ extension LayoutGeneratorIterator: IteratorProtocol {
                         break
                     }
 
-                    guard spans.allSatisfy({ newSpan.compatible(with: $0) }) else {
+                    guard edgeSet.contains(newSpan.lastEdge) || blackSet.contains(newSpan.lastEdge) else {
+                        continue
+                    }
+
+                    guard edgeSet.allSatisfy({!(newSpan.rangeX.contains($0.x) && newSpan.rangeY.contains($0.y))}) else {
                         continue
                     }
 
@@ -108,15 +124,33 @@ extension LayoutGeneratorIterator: IteratorProtocol {
                         continue
                     }
 
-                    candidates.append((score, newSpan))
+                    var newLayout = layout
+                    newLayout.insert(newSpan)
+
+                    candidates.append(newLayout)
                 }
             }
         }
 
-        return
-            candidates
-            .shuffled()
-            .sorted(by: { $0.0 >= $1.0 })
-            .prefix(beamWidth).map { $0.1 }
+        return candidates
+    }
+
+    private func makeEdgeSet(spans: [Span]) -> Set<Location> {
+        var edges = Set<Location>()
+        for span in spans {
+            edges.insert(span.firstEdge)
+            edges.insert(span.lastEdge)
+        }
+
+        for x in -1 ... grid.width {
+            edges.insert(Location(x, -1))
+            edges.insert(Location(x, grid.height))
+        }
+
+        for y in -1 ... grid.height {
+            edges.insert(Location(-1, y))
+            edges.insert(Location(grid.width, y))
+        }
+        return edges
     }
 }

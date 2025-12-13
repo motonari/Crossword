@@ -5,7 +5,7 @@ import Synchronization
 public struct Layout: Sendable {
     let grid: Grid
 
-    private var storage: [UInt8]
+    private(set) var storage: [UInt8]
     private var cache = CacheWrapper()
 }
 
@@ -349,6 +349,27 @@ extension Layout {
         }
         return blackCells
     }
+
+    public var gridRepresentation: String {
+        let charRow = [Character](repeating: ":", count: grid.width)
+        var charGrid = [[Character]](repeating: charRow, count: grid.height)
+
+        for location in blackCells() {
+            if cell(at: location) == .black {
+                charGrid[location.y][location.x] = "#"
+            }
+        }
+
+        var result = ""
+        for row in charGrid {
+            for char in row {
+                result.append(char)
+            }
+            result.append("\n")
+        }
+        return String(result.dropLast())
+    }
+
 }
 
 // MARK: Static utility functions
