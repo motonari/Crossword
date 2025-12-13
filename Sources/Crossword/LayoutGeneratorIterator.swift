@@ -45,14 +45,15 @@ extension LayoutGeneratorIterator: IteratorProtocol {
 
     private mutating func expand(_ baseLayout: Layout) {
         let newLayouts = expandInternal(baseLayout)
-        let sortedNewLayouts = newLayouts
-          .shuffled()
-          .sorted(by: { layout1, layout2 in
-                      let (intersectionCount1, _) = layout1.score
-                      let (intersectionCount2, _) = layout2.score
-                      return intersectionCount1 >= intersectionCount2
-                  })
-          .prefix(beamWidth)
+        let sortedNewLayouts =
+            newLayouts
+            .shuffled()
+            .sorted(by: { layout1, layout2 in
+                let (intersectionCount1, _) = layout1.score
+                let (intersectionCount2, _) = layout2.score
+                return intersectionCount1 >= intersectionCount2
+            })
+            .prefix(beamWidth)
 
         for newLayout in sortedNewLayouts {
             if visitLog.firstVisit(fingerprint(of: newLayout)) {
@@ -84,13 +85,16 @@ extension LayoutGeneratorIterator: IteratorProtocol {
                     continue
                 }
 
+                guard !spans.contains(where: { $0.start == location && $0.direction == direction })
+                else {
+                    continue
+                }
+
                 for length in (minWordLength...maxLength) {
                     let newSpan = Span(at: location, length: length, direction: direction)
-                    guard !spans.contains(newSpan) else {
-                        continue
-                    }
-
-                    guard edgeSet.contains(newSpan.firstEdge) || blackSet.contains(newSpan.firstEdge) else {
+                    guard
+                        edgeSet.contains(newSpan.firstEdge) || blackSet.contains(newSpan.firstEdge)
+                    else {
                         // Optimization. If `newSpan`'s start is not
                         // compatible with an existing span, it won't
                         // be compatible if we extend the length of
@@ -98,11 +102,16 @@ extension LayoutGeneratorIterator: IteratorProtocol {
                         break
                     }
 
-                    guard edgeSet.contains(newSpan.lastEdge) || blackSet.contains(newSpan.lastEdge) else {
+                    guard edgeSet.contains(newSpan.lastEdge) || blackSet.contains(newSpan.lastEdge)
+                    else {
                         continue
                     }
 
-                    guard edgeSet.allSatisfy({!(newSpan.rangeX.contains($0.x) && newSpan.rangeY.contains($0.y))}) else {
+                    guard
+                        edgeSet.allSatisfy({
+                            !(newSpan.rangeX.contains($0.x) && newSpan.rangeY.contains($0.y))
+                        })
+                    else {
                         continue
                     }
 
@@ -142,12 +151,12 @@ extension LayoutGeneratorIterator: IteratorProtocol {
             edges.insert(span.lastEdge)
         }
 
-        for x in -1 ... grid.width {
+        for x in -1...grid.width {
             edges.insert(Location(x, -1))
             edges.insert(Location(x, grid.height))
         }
 
-        for y in -1 ... grid.height {
+        for y in -1...grid.height {
             edges.insert(Location(-1, y))
             edges.insert(Location(grid.width, y))
         }
