@@ -97,9 +97,16 @@ extension LayoutFile {
                 try fileHandle.write(
                     contentsOf: withUnsafeBytes(of: UInt32(wordCount).littleEndian) { Data($0) })
 
+                let writeBufferSize = 1024 * 1024
+                var data = Data(capacity: writeBufferSize)
                 for chunk in layoutData {
-                    try fileHandle.write(contentsOf: chunk)
+                    if data.count + chunk.count > writeBufferSize {
+                        try fileHandle.write(contentsOf: data)
+                        data.removeAll()
+                    }
+                    data.append(chunk)
                 }
+                try fileHandle.write(contentsOf: data)
 
                 try fileHandle.close()
                 _ = try FileManager.default.replaceItemAt(
