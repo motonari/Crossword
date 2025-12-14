@@ -12,7 +12,7 @@ struct LayoutGeneratorIterator {
     let beamWidth: Int
 
     private var workQueue = Deque<Layout>()
-    private let visitLog = SearchLog<SHA256.Digest>()
+    private let visitLog = SearchLog<[UInt8]>()
 }
 
 // MARK: Initializers
@@ -63,8 +63,8 @@ extension LayoutGeneratorIterator: IteratorProtocol {
         }
     }
 
-    private func fingerprint(of layout: Layout) -> SHA256.Digest {
-        SHA256.hash(data: Data(layout.storage))
+    private func fingerprint(of layout: Layout) -> [UInt8] {
+        layout.storage
     }
 
     private func expandInternal(_ layout: Layout) -> [Layout] {
