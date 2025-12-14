@@ -185,55 +185,6 @@ extension Span {
     }
 }
 
-/// Compatibility test
-extension Span {
-    func compatibleStart(with other: Span) -> Bool {
-        // The other span contains a cell which is prior to the this
-        // span's starting cell. For example, "THIS" and "OTHER"
-        // cannot co-exist in this way because "HTHIS" is not a word.
-        //
-        //  O
-        //  T
-        //  HTHIS
-        //  E
-        //  R
-
-        return !other.rangeX.contains(firstEdge.x) || !other.rangeY.contains(firstEdge.y)
-    }
-
-    func compatibleEnd(with other: Span) -> Bool {
-        // The other span contains a cell which is after the this
-        // span's last cell. For example, "THIS" and "OTHER"
-        // cannot co-exist in this way because "THISH" is not a word.
-        //
-        //      O
-        //      T
-        //  THISH
-        //      E
-        //      R
-
-        return !other.rangeX.contains(lastEdge.x) || !other.rangeY.contains(lastEdge.y)
-    }
-
-    /// Returns true if the span can co-exist with the other span.
-    func compatible(with other: Span) -> Bool {
-        guard self != other else {
-            // Two equal spans cannot co-exist.
-            return false
-        }
-
-        guard
-            self.compatibleStart(with: other),
-            self.compatibleEnd(with: other),
-            other.compatibleStart(with: self),
-            other.compatibleEnd(with: self)
-        else {
-            return false
-        }
-        return true
-    }
-}
-
 extension Span {
     /// Two spans with same direction share the borders.
     func adjoining(with other: Span) -> Bool {

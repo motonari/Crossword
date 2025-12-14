@@ -102,9 +102,11 @@ struct CrosswordMaker: AsyncParsableCommand {
             maxLayoutCount: maxLayoutCount)
 
         let layoutFile = try? await LayoutFile(contentsOf: layoutFileURL)
+
+        print("Start generating ...")
         for await layoutFile in try factory.generate(basedOn: layoutFile) {
             print(
-                "score: \(layoutFile.maxIntersectionCount) number of layouts: \(layoutFile.layoutCount)"
+                "Max Score = \(layoutFile.maxIntersectionCount), Layout Count = \(layoutFile.layoutCount)"
             )
 
             try await layoutFile.write(to: layoutFileURL)

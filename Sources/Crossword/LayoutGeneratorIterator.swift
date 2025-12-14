@@ -1,4 +1,5 @@
 import Collections
+import CryptoKit
 import Foundation
 
 // MARK: Structure
@@ -11,7 +12,7 @@ struct LayoutGeneratorIterator {
     let beamWidth: Int
 
     private var workQueue = Deque<Layout>()
-    private let visitLog = SearchLog<[UInt8]>()
+    private let visitLog = SearchLog<SHA256.Digest>()
 }
 
 // MARK: Initializers
@@ -62,93 +63,176 @@ extension LayoutGeneratorIterator: IteratorProtocol {
         }
     }
 
-    private func fingerprint(of layout: Layout) -> [UInt8] {
-        return layout.storage
+    private func fingerprint(of layout: Layout) -> SHA256.Digest {
+        SHA256.hash(data: Data(layout.storage))
     }
 
     private func expandInternal(_ layout: Layout) -> [Layout] {
         var candidates = [Layout]()
         let spans = layout.spans
-        let edgeSet = makeEdgeSet(spans: spans)
         let blackSet = Set(layout.blackCells())
+        let edgeSet = makeEdgeSet(spans: spans)
 
-        for direction in Direction.allCases {
-            for location in Locations(grid: grid) {
-                let maxLength =
-                    if direction == .across {
-                        grid.width - location.x
-                    } else {
-                        grid.height - location.y
-                    }
+        for y in 0..<grid.height {
+            candidates.append(
+                contentsOf: findLayout(
+                    baseLayout: layout,
+                    rowOrColumn: y,
+                    direction: .across,
+                    spans: spans,
+                    blackSet: blackSet,
+                    edgeSet: edgeSet)
+            )
+        }
 
-                if maxLength < minWordLength {
-                    continue
-                }
-
-                guard !spans.contains(where: { $0.start == location && $0.direction == direction })
-                else {
-                    continue
-                }
-
-                for length in (minWordLength...maxLength) {
-                    let newSpan = Span(at: location, length: length, direction: direction)
-                    guard
-                        edgeSet.contains(newSpan.firstEdge) || blackSet.contains(newSpan.firstEdge)
-                    else {
-                        // Optimization. If `newSpan`'s start is not
-                        // compatible with an existing span, it won't
-                        // be compatible if we extend the length of
-                        // it.
-                        break
-                    }
-
-                    guard edgeSet.contains(newSpan.lastEdge) || blackSet.contains(newSpan.lastEdge)
-                    else {
-                        continue
-                    }
-
-                    guard
-                        edgeSet.allSatisfy({
-                            !(newSpan.rangeX.contains($0.x) && newSpan.rangeY.contains($0.y))
-                        })
-                    else {
-                        continue
-                    }
-
-                    guard
-                        !spans.contains(where: {
-                            newSpan.adjoining(with: $0)
-                        })
-                    else {
-                        continue
-                    }
-
-                    let score = spans.count {
-                        newSpan.intersects(with: $0) != nil
-                    }
-
-                    guard spans.count == 0 || score > 0 else {
-                        // A new span must intersects with at least
-                        // one existing span, if such a span exists.
-                        continue
-                    }
-
-                    var newLayout = layout
-                    newLayout.insert(newSpan)
-
-                    candidates.append(newLayout)
-                }
-            }
+        for x in 0..<grid.width {
+            candidates.append(
+                contentsOf: findLayout(
+                    baseLayout: layout,
+                    rowOrColumn: x,
+                    direction: .down,
+                    spans: spans,
+                    blackSet: blackSet,
+                    edgeSet: edgeSet)
+            )
         }
 
         return candidates
     }
 
-    private func makeEdgeSet(spans: [Span]) -> Set<Location> {
+    private func findLayout(
+        baseLayout: Layout,
+        rowOrColumn: Int,
+        direction: Direction,
+        spans: [Span],
+        blackSet: some Sequence<Location>,
+        edgeSet: some Sequence<Location>
+    ) -> [Layout] {
+        var candidates = [Layout]()
+        let filter = makeBlockingCellFilter(direction: direction, rowOrColumn: rowOrColumn)
+        let filteredBlackSet = blackSet.filter(filter)
+        let filteredEdgeSet = edgeSet.filter(filter)
+
+        let maxStartIndex = direction == .across ? grid.width : grid.height
+
+        for startIndex in 0..<maxStartIndex {
+            let maxLength = maxSpanLength(from: startIndex, direction: direction)
+            if maxLength < minWordLength {
+                break
+            }
+
+            let location = spanStartLocation(
+                movingIndex: startIndex, fixedIndex: rowOrColumn, for: direction)
+            guard !spans.contains(where: { $0.start == location && $0.direction == direction })
+            else {
+                continue
+            }
+
+            for length in (minWordLength...maxLength) {
+                let firstEdge = location - direction.delta
+                guard
+                    filteredEdgeSet.contains(firstEdge) || filteredBlackSet.contains(firstEdge)
+                else {
+                    // Optimization. If `newSpan`'s start is not
+                    // compatible with an existing span, it won't
+                    // be compatible if we extend the length of
+                    // it.
+                    break
+                }
+
+                let lastEdge: Location = spanEndLocation(
+                    start: location, length: length, direction: direction)
+
+                guard filteredEdgeSet.contains(lastEdge) || filteredBlackSet.contains(lastEdge)
+                else {
+                    continue
+                }
+
+                let newSpan = Span(at: location, length: length, direction: direction)
+                guard
+                    filteredEdgeSet.allSatisfy({
+                        !(newSpan.rangeX.contains($0.x) && newSpan.rangeY.contains($0.y))
+                    })
+                else {
+                    continue
+                }
+
+                guard
+                    !spans.contains(where: {
+                        newSpan.adjoining(with: $0)
+                    })
+                else {
+                    continue
+                }
+
+                let score = spans.count {
+                    newSpan.intersects(with: $0) != nil
+                }
+
+                guard spans.count == 0 || score > 0 else {
+                    // A new span must intersects with at least
+                    // one existing span, if such a span exists.
+                    continue
+                }
+
+                var newLayout = baseLayout
+                newLayout.insert(newSpan)
+
+                candidates.append(newLayout)
+            }
+        }
+        return candidates
+    }
+
+    private func maxSpanLength(from index: Int, direction: Direction) -> Int {
+        let result =
+            if direction == .across {
+                grid.width - index
+            } else {
+                grid.height - index
+            }
+        return result
+    }
+
+    private func spanStartLocation(movingIndex: Int, fixedIndex: Int, for direction: Direction)
+        -> Location
+    {
+        return if direction == .across {
+            Location(movingIndex, fixedIndex)
+        } else {
+            Location(fixedIndex, movingIndex)
+        }
+    }
+
+    private func spanEndLocation(start: Location, length: Int, direction: Direction) -> Location {
+        return Location(
+            start.x + direction.deltaX * length,
+            start.y + direction.deltaY * length)
+    }
+
+    private func makeBlockingCellFilter(
+        direction: Direction,
+        rowOrColumn: Int
+    ) -> (Location) -> Bool {
+        if direction == .across {
+            return { $0.y == rowOrColumn }
+        } else {
+            return { $0.x == rowOrColumn }
+        }
+    }
+
+    private func makeEdgeSet(
+        spans: [Span]
+    ) -> Set<Location> {
         var edges = Set<Location>()
         for span in spans {
             edges.insert(span.firstEdge)
             edges.insert(span.lastEdge)
+        }
+
+        for y in -1...grid.height {
+            edges.insert(Location(-1, y))
+            edges.insert(Location(grid.width, y))
         }
 
         for x in -1...grid.width {
@@ -156,10 +240,6 @@ extension LayoutGeneratorIterator: IteratorProtocol {
             edges.insert(Location(x, grid.height))
         }
 
-        for y in -1...grid.height {
-            edges.insert(Location(-1, y))
-            edges.insert(Location(grid.width, y))
-        }
         return edges
     }
 }

@@ -42,65 +42,6 @@ import Testing
         #expect(spanA.intersects(with: spanB) == nil)
     }
 
-    @Test func noOverlappingIsCompatible() throws {
-        // AAA
-        //
-        // BBB
-        let spanA = Span(at: (0, 0), length: 3, direction: .across)
-        let spanB = Span(at: (0, 2), length: 3, direction: .across)
-        #expect(spanA.compatible(with: spanB))
-        #expect(spanB.compatible(with: spanA))
-    }
-
-    @Test func adjacentButNoOverlappingIsCompatible() throws {
-        // AAA
-        // BBB
-        let spanA = Span(at: (0, 0), length: 3, direction: .across)
-        let spanB = Span(at: (0, 1), length: 3, direction: .across)
-        #expect(spanA.compatible(with: spanB))
-        #expect(spanB.compatible(with: spanA))
-    }
-
-    @Test func crossingIsCompatible() throws {
-        // AxA
-        //  B
-        //  B
-        let spanA = Span(at: (0, 0), length: 3, direction: .across)
-        let spanB = Span(at: (1, 0), length: 3, direction: .down)
-        #expect(spanA.compatible(with: spanB))
-        #expect(spanB.compatible(with: spanA))
-    }
-
-    @Test func horizontalConcatenatingIsNotCompatible() throws {
-        // AAABBB
-        let spanA = Span(at: (0, 0), length: 3, direction: .across)
-        let spanB = Span(at: (3, 0), length: 3, direction: .across)
-        #expect(!spanA.compatible(with: spanB))
-        #expect(!spanB.compatible(with: spanA))
-    }
-
-    @Test func verticalConcatenatingIsNotCompatible() throws {
-        // A
-        // A
-        // B
-        // B
-        let spanA = Span(at: (0, 0), length: 2, direction: .down)
-        let spanB = Span(at: (0, 2), length: 2, direction: .down)
-        #expect(!spanA.compatible(with: spanB))
-        #expect(!spanB.compatible(with: spanA))
-    }
-
-    @Test func adjacentOfDifferentDirectionIsNotCompatible() throws {
-        // AAA
-        //  B
-        //  B
-        //  B
-        let spanA = Span(at: (0, 0), length: 3, direction: .across)
-        let spanB = Span(at: (1, 1), length: 3, direction: .down)
-        #expect(!spanA.compatible(with: spanB))
-        #expect(!spanB.compatible(with: spanA))
-    }
-
     @Test func adjoining() throws {
         // AAA
         // BBB

@@ -50,7 +50,8 @@ extension LayoutFactory {
                     updatedLayoutData.insert(layout, maxLayoutCount: maxLayoutCount)
 
                     counter += 1
-                    if counter % 1000 == 0 {
+                    if counter % 1024 == 0 {
+                        counter = 0
                         let layoutFile = LayoutFile(
                             grid: grid,
                             wordCount: wordCount,
@@ -62,6 +63,7 @@ extension LayoutFactory {
                             result = continuation.yield(consume failedItem)
                         }
                     }
+
                 }
 
                 continuation.finish()
