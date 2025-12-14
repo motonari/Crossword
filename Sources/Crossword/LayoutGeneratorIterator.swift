@@ -70,7 +70,7 @@ extension LayoutGeneratorIterator: IteratorProtocol {
     private func expandInternal(_ layout: Layout) -> [Layout] {
         var candidates = [Layout]()
         let spans = layout.spans
-        let blackSet = Set(layout.blackCells())
+        let blackSet = layout.blackCells()
         let edgeSet = makeEdgeSet(spans: spans)
 
         for y in 0..<grid.height {
@@ -105,13 +105,25 @@ extension LayoutGeneratorIterator: IteratorProtocol {
         rowOrColumn: Int,
         direction: Direction,
         spans: [Span],
-        blackSet: some Sequence<Location>,
-        edgeSet: some Sequence<Location>
+        blackSet: [Location],
+        edgeSet: [Location]
     ) -> [Layout] {
         var candidates = [Layout]()
         let filter = makeBlockingCellFilter(direction: direction, rowOrColumn: rowOrColumn)
-        let filteredBlackSet = blackSet.filter(filter)
-        let filteredEdgeSet = edgeSet.filter(filter)
+        var filteredBlackSet = Set<Location>(minimumCapacity: blackSet.count)
+        var filteredEdgeSet = Set<Location>(minimumCapacity: edgeSet.count)
+
+        for item in blackSet {
+            if filter(item) {
+                filteredBlackSet.insert(item)
+            }
+        }
+
+        for item in edgeSet {
+            if filter(item) {
+                filteredEdgeSet.insert(item)
+            }
+        }
 
         let maxStartIndex = direction == .across ? grid.width : grid.height
 
@@ -223,21 +235,21 @@ extension LayoutGeneratorIterator: IteratorProtocol {
 
     private func makeEdgeSet(
         spans: [Span]
-    ) -> Set<Location> {
-        var edges = Set<Location>()
+    ) -> [Location] {
+        var edges = [Location]()
         for span in spans {
-            edges.insert(span.firstEdge)
-            edges.insert(span.lastEdge)
+            edges.append(span.firstEdge)
+            edges.append(span.lastEdge)
         }
 
         for y in -1...grid.height {
-            edges.insert(Location(-1, y))
-            edges.insert(Location(grid.width, y))
+            edges.append(Location(-1, y))
+            edges.append(Location(grid.width, y))
         }
 
         for x in -1...grid.width {
-            edges.insert(Location(x, -1))
-            edges.insert(Location(x, grid.height))
+            edges.append(Location(x, -1))
+            edges.append(Location(x, grid.height))
         }
 
         return edges
